@@ -15,3 +15,9 @@ class CarRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class CarUpdate(BaseModel):
+    make: str | None = None
+    model: str | None = None
+    engine: str | None = None
+    year: int | None = None
