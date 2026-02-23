@@ -4,3 +4,15 @@ pydantic-settings
 sqlalchemy>=2.0
 psycopg2-binary
 alembic
+
+
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+
+JWT_SECRET=change-me
+JWT_ALG=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=360
+
+FRONTEND_ORIGIN=http://localhost:3000
+COOKIE_SECURE=false
