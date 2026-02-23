@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 
 from alembic import context
+from app.db.models.user import User  # noqa: F401
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
