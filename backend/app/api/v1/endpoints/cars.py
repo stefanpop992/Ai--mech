@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db.models.car import Car
 from app.db.session import get_db
-from app.schemas.car import CarRead, CarRegisterRequest
+from app.schemas.car import CarRead, CarRegisterRequest, CarUpdate
 from app.services.car_info import lookup_car_by_regnr, normalize_regnr
 
 router = APIRouter(prefix="/cars", tags=["cars"])
@@ -34,4 +34,40 @@ def register_car(payload: CarRegisterRequest, db: Session = Depends(get_db)):
     db.add(car)
     db.commit()
     db.refresh(car)
+    return car
+
+@router.delete("/{car_id}")
+def delete_car(car_id: int, db: Session = Depends(get_db)):
+    
+    car = db.query(Car).filter(Car.id == car_id).first()
+    
+    
+    if not car:
+        raise HTTPException(status_code=404, detail="Bilen hittades inte i garaget")
+    
+    
+    db.delete(car)
+    db.commit()
+    
+    return {"message": "Bilen har tagits bort!"}
+
+@router.put("/{car_id}", response_model=CarRead)
+def update_car(car_id: int, payload: CarUpdate, db: Session = Depends(get_db)):
+    
+    car = db.query(Car).filter(Car.id == car_id).first()
+    if not car:
+        raise HTTPException(status_code=404, detail="Bilen hittades inte i garaget")
+    
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    
+    
+    for key, value in update_data.items():
+        setattr(car, key, value)
+    
+    
+    db.add(car)
+    db.commit()
+    db.refresh(car)
+    
     return car

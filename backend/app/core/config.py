@@ -9,3 +9,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+JWT_SECRET: str
+JWT_ALG: str = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+
+FRONTEND_ORIGIN: str = "http://localhost:3000"
+COOKIE_SECURE: bool = False

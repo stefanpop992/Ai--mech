@@ -1,6 +1,8 @@
+import os
 from logging.config import fileConfig
 
 from alembic import context
+from app.db.models.user import User  # noqa: F401
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
@@ -20,6 +22,12 @@ from app.db.base import Base
 from app.db.models.car import Car  # noqa: F401
 
 target_metadata = Base.metadata
+
+# Set database URL from environment variable
+database_url = (
+    f"postgresql://postgres:{os.getenv('POSTGRES_PASSWORD')}@db:5432/ai_mechanic"
+)
+config.set_main_option("sqlalchemy.url", database_url)
 
 
 # other values from the config, defined by the needs of env.py,
