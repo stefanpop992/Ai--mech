@@ -14,7 +14,7 @@ from app.services.garage_service import get_or_create_garage
 router = APIRouter(prefix="/cars", tags=["cars"])
 
 
-# ✅ PUBLIC: Vem som helst kan slå upp en bil via regnr
+#  PUBLIC: Vem som helst kan slå upp en bil via regnr
 @router.get("/lookup", response_model=CarRead)
 def lookup_car(regnr: str, db: Session = Depends(get_db)):
     regnr_n = normalize_regnr(regnr)
@@ -37,7 +37,7 @@ def lookup_car(regnr: str, db: Session = Depends(get_db)):
     return car
 
 
-# ✅ AUTH: Lista MINA bilar (mitt garage)
+#  AUTH: Lista MINA bilar (mitt garage)
 @router.get("", response_model=list[CarRead])
 def list_my_cars(
     db: Session = Depends(get_db),
@@ -59,7 +59,7 @@ def list_my_cars(
     return cars
 
 
-# ✅ AUTH: Lägg till bil i MITT garage (idempotent)
+#  AUTH: Lägg till bil i MITT garage (idempotent)
 @router.post("/register", response_model=CarRead)
 def register_car(
     payload: CarRegisterRequest,
@@ -97,7 +97,7 @@ def register_car(
     return car
 
 
-# ✅ AUTH: Ta bort bil från MITT garage (radera inte katalograden)
+#  AUTH: Ta bort bil från MITT garage (radera inte katalograden)
 @router.delete("/{car_id}")
 def remove_car_from_my_garage(
     car_id: int,
@@ -119,7 +119,7 @@ def remove_car_from_my_garage(
     return {"message": "Bilen har tagits bort från ditt garage!"}
 
 
-# ✅ AUTH: Uppdatera info för en bil (bara om den finns i mitt garage)
+# AUTH: Uppdatera info för en bil (bara om den finns i mitt garage)
 @router.put("/{car_id}", response_model=CarRead)
 def update_car(
     car_id: int,
