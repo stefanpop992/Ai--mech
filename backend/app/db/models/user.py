@@ -16,6 +16,9 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    garage = relationship(
-        "Garage", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    garage: Mapped["Garage"] = relationship(
+        "Garage",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )

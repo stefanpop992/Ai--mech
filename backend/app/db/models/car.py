@@ -1,6 +1,7 @@
-from app.db.base import Base
 from sqlalchemy import Integer, String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.db.base import Base
 
 
 class Car(Base):
@@ -13,3 +14,9 @@ class Car(Base):
     model: Mapped[str | None] = mapped_column(String(64), nullable=True)
     engine: Mapped[str | None] = mapped_column(String(64), nullable=True)
     year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    garages: Mapped[list["GarageCar"]] = relationship(
+        "GarageCar",
+        back_populates="car",
+        cascade="all, delete-orphan",
+    )
