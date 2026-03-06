@@ -1,7 +1,7 @@
 """create cars
 
 Revision ID: 89c270e86bde
-Revises: 
+Revises:
 Create Date: 2026-02-16 19:35:43.477662
 
 """

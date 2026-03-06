@@ -1,67 +1,236 @@
-import { getCars } from '../../lib/api-client';
-import CarCard, { Car } from '../../components/CarCard';
-import ChatWindow from '../../components/ChatWindow';
-export default async function Dashboard() {
-  const cars = await getCars();
+'use client';
+import { useState } from 'react';
+import DashboardHeader from '@/components/DashboardHeader';
+import CarCard from '@/components/CarCard';
+import ChatWindow from '@/components/ChatWindow';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useCars, createCarByRegnr, createCarManual, removeCar } from '@/hooks/use-cars';
+import { type Car } from '@/lib/api-client';
+import ProtectedRoute from '@/components/ProtectedRoute';
+
+type AddMode = 'regnr' | 'manual';
+
+const emptyManual = { regnr: '', make: '', model: '', year: '', engine: '' };
+
+export default function DashboardPage() {
+  const { cars, isLoading, isError } = useCars();
+  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addMode, setAddMode] = useState<AddMode>('regnr');
+  const [regnr, setRegnr] = useState('');
+  const [manual, setManual] = useState(emptyManual);
+  const [addLoading, setAddLoading] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  const handleSelectCar = (car: Car) => {
+    setSelectedCar((prev) => (prev?.id === car.id ? null : car));
+  };
+
+  const handleDeleteCar = async (carId: number) => {
+    await removeCar(carId);
+    setSelectedCar((prev) => (prev?.id === carId ? null : prev));
+  };
+
+  const handleClose = () => {
+    setShowAddForm(false);
+    setAddError('');
+    setRegnr('');
+    setManual(emptyManual);
+  };
+
+  const handleAddByRegnr = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError('');
+    setAddLoading(true);
+    try {
+      await createCarByRegnr(regnr.trim().toUpperCase());
+      handleClose();
+    } catch {
+      setAddError('Kunde inte hitta bilen. Kontrollera registreringsnumret.');
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const handleAddManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError('');
+    setAddLoading(true);
+    try {
+      await createCarManual({
+        regnr: manual.regnr.trim().toUpperCase(),
+        make: manual.make.trim(),
+        model: manual.model.trim(),
+        year: Number(manual.year),
+        engine: manual.engine.trim() || undefined,
+      });
+      handleClose();
+    } catch (err: any) {
+      setAddError(err?.message ?? 'Kunde inte lägga till bilen.');
+    } finally {
+      setAddLoading(false);
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-            Mitt AI-Garage 🛠️
-          </h1>
-          <div className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-            Inloggad som: Mekaniker
-          </div>
-        </div>
-      </header>
+    <ProtectedRoute>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      <DashboardHeader />
 
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-8">
-        
-        {/* VÄNSTER SIDA: Garaget */}
-        <div className="w-full lg:w-1/3">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-            <span>🚘</span> Välj fordon
-          </h2>
-          <div className="flex flex-col gap-4">
-            {cars.length === 0 ? (
-              <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-200 text-center">
-                <p className="text-gray-500">Garaget är tomt.</p>
+      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Mina fordon</h2>
+          <Button
+            onClick={() => (showAddForm ? handleClose() : setShowAddForm(true))}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+          >
+            {showAddForm ? 'Avbryt' : '+ Lägg till bil'}
+          </Button>
+        </div>
+
+        {/* Add car form */}
+        {showAddForm && (
+          <div className="mb-6 bg-gray-800 border border-gray-700 rounded-xl p-5">
+            {/* Tabs */}
+            <div className="flex gap-1 bg-gray-900 rounded-lg p-1 mb-5 w-fit">
+              <button
+                onClick={() => { setAddMode('regnr'); setAddError(''); }}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  addMode === 'regnr'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Via regnummer
+              </button>
+              <button
+                onClick={() => { setAddMode('manual'); setAddError(''); }}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  addMode === 'manual'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Manuellt
+              </button>
+            </div>
+
+            {addError && (
+              <div className="bg-red-900/40 border border-red-700 text-red-300 text-sm px-3 py-2 rounded-md mb-4">
+                {addError}
               </div>
-            ) : (
-              cars.map((car: Car) => (
-                <CarCard key={car.id} car={car} />
-              ))
+            )}
+
+            {/* Auto lookup by regnr */}
+            {addMode === 'regnr' && (
+              <>
+                <p className="text-sm text-gray-400 mb-3">Vi hämtar bilens uppgifter automatiskt via registreringsnumret.</p>
+                <form onSubmit={handleAddByRegnr} className="flex gap-3">
+                  <Input
+                    placeholder="Regnummer (t.ex. ABC123)"
+                    value={regnr}
+                    onChange={(e) => setRegnr(e.target.value.toUpperCase())}
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 max-w-xs"
+                  />
+                  <Button type="submit" disabled={addLoading || !regnr.trim()} className="bg-blue-600 hover:bg-blue-500">
+                    {addLoading ? 'Söker...' : 'Lägg till'}
+                  </Button>
+                </form>
+              </>
+            )}
+
+            {/* Manual entry */}
+            {addMode === 'manual' && (
+              <>
+                <p className="text-sm text-gray-400 mb-3">Fyll i bilens uppgifter själv.</p>
+                <form onSubmit={handleAddManual} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input
+                    placeholder="Regnummer (t.ex. ABC123)"
+                    value={manual.regnr}
+                    onChange={(e) => setManual({ ...manual, regnr: e.target.value.toUpperCase() })}
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  />
+                  <Input
+                    placeholder="Märke (t.ex. Volvo)"
+                    value={manual.make}
+                    onChange={(e) => setManual({ ...manual, make: e.target.value })}
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  />
+                  <Input
+                    placeholder="Modell (t.ex. V70)"
+                    value={manual.model}
+                    onChange={(e) => setManual({ ...manual, model: e.target.value })}
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  />
+                  <Input
+                    placeholder="Årsmodell (t.ex. 2018)"
+                    type="number"
+                    min="1900"
+                    max="2099"
+                    value={manual.year}
+                    onChange={(e) => setManual({ ...manual, year: e.target.value })}
+                    required
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
+                  />
+                  <Input
+                    placeholder="Motor (valfritt, t.ex. 2.0 TDI)"
+                    value={manual.engine}
+                    onChange={(e) => setManual({ ...manual, engine: e.target.value })}
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 sm:col-span-2"
+                  />
+                  <Button
+                    type="submit"
+                    disabled={addLoading}
+                    className="sm:col-span-2 bg-blue-600 hover:bg-blue-500 font-semibold"
+                  >
+                    {addLoading ? 'Sparar...' : 'Spara fordon'}
+                  </Button>
+                </form>
+              </>
             )}
           </div>
-        </div>
+        )}
 
-        {/* HÖGER SIDA: Arbetsytan */}
-        <div className="w-full lg:w-2/3 flex flex-col gap-6">
-          <div className="bg-gray-200 rounded-xl flex items-center justify-center h-64 lg:h-80 border-2 border-dashed border-gray-300 shadow-inner relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 opacity-50"></div>
-            <p className="text-gray-500 font-semibold text-lg z-10 flex flex-col items-center gap-2">
-              <span className="text-3xl">🚗</span> 
-              3D-scen laddas här framöver...
-            </p>
+        {/* States */}
+        {isLoading && <div className="text-gray-400 py-12 text-center">Laddar fordon...</div>}
+        {isError && <div className="text-red-400 py-12 text-center">Kunde inte hämta fordon. Är du inloggad?</div>}
+        {!isLoading && !isError && cars.length === 0 && (
+          <div className="text-center py-16 text-gray-500">
+            <p className="text-5xl mb-4">🚗</p>
+            <p className="text-lg font-medium text-gray-300">Inga fordon i garaget</p>
+            <p className="text-sm mt-1">Klicka på "+ Lägg till bil" för att komma igång.</p>
           </div>
+        )}
 
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 flex-1 min-h-[400px] flex flex-col">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-              <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                <span className="text-blue-500">🤖</span> AI-Assistent
-              </h3>
-            </div>
-            <div className="flex-1 p-6 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
-              <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-              <p className="text-center max-w-sm">
-                <ChatWindow />
-              </p>
-            </div>
+        {/* Car grid */}
+        {cars.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cars.map((car) => (
+              <CarCard
+                key={car.id}
+                car={car}
+                isSelected={selectedCar?.id === car.id}
+                onSelect={handleSelectCar}
+                onDelete={handleDeleteCar}
+              />
+            ))}
           </div>
-        </div>
-      </div>
-    </main>
+        )}
+
+        {/* Chat window */}
+        {selectedCar && (
+          <div className="mt-6">
+            <ChatWindow car={selectedCar} />
+          </div>
+        )}
+      </main>
+    </div>
+    </ProtectedRoute>
   );
 }

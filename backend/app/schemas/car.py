@@ -5,6 +5,14 @@ class CarRegisterRequest(BaseModel):
     regnr: str
 
 
+class CarCreateManual(BaseModel):
+    regnr: str
+    make: str
+    model: str
+    year: int
+    engine: str | None = None
+
+
 class CarRead(BaseModel):
     id: int
     regnr: str

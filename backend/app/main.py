@@ -1,21 +1,10 @@
 from fastapi import FastAPI
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
+from app.core.config import settings
 
 app = FastAPI(title="AI Mechanic API")
 
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok"}
-
-
-app.include_router(api_router, prefix="/api/v1")
-
-
-from fastapi.middleware.cors import CORSMiddleware
-
-from app.core.config import settings
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,3 +13,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
+
+
+app.include_router(api_router, prefix="/api/v1")
