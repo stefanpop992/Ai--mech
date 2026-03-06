@@ -13,4 +13,6 @@ class Settings(BaseSettings):
 
     FRONTEND_ORIGIN: str = "http://localhost:3000"
     COOKIE_SECURE: bool = False
+
+
 settings = Settings()
