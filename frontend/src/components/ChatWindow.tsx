@@ -1,4 +1,5 @@
 'use client';
+import ReactMarkdown from 'react-markdown'
 import { useState, useRef, useEffect } from 'react';
 import { askAI, type Car } from '@/lib/api-client';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
@@ -86,7 +87,15 @@ export default function ChatWindow({ car }: ChatWindowProps) {
                       : 'bg-gray-700 text-gray-100 rounded-bl-sm border border-gray-600'
                   }`}
                 >
-                  {msg.content}
+                  {msg.role === 'user' ? (
+                    msg.content
+                  ) : (
+                    <div className="prose prose-invert prose-sm max-w-none">
+                      <ReactMarkdown>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
