@@ -14,5 +14,7 @@ class Settings(BaseSettings):
     FRONTEND_ORIGIN: str = "http://localhost:3000"
     COOKIE_SECURE: bool = False
 
+    GEMINI_API_KEY: str
+
 
 settings = Settings()
