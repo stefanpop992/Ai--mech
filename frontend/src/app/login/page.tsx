@@ -61,7 +61,15 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-gray-300">Lösenord</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm text-gray-300">Lösenord</label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-blue-400 hover:text-blue-300"
+                  >
+                    Glömt lösenord?
+                  </Link>
+                </div>
                 <Input
                   type="password"
                   placeholder="••••••••"

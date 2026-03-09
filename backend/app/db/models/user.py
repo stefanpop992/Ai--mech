@@ -1,5 +1,6 @@
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
 
 from app.db.base import Base
 
@@ -14,6 +15,12 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Password reset
+    reset_token: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    reset_token_expires: Mapped[Optional[object]] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
 
     garage: Mapped["Garage"] = relationship(

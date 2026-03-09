@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -17,14 +18,25 @@ export default function DashboardHeader() {
         </div>
       </div>
 
-      <Button
-        onClick={logout}
-        variant="outline"
-        size="sm"
-        className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
-      >
-        Logga ut
-      </Button>
+      <div className="flex items-center gap-2">
+        <Link href="/settings">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
+          >
+            ⚙️ Inställningar
+          </Button>
+        </Link>
+        <Button
+          onClick={logout}
+          variant="outline"
+          size="sm"
+          className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
+        >
+          Logga ut
+        </Button>
+      </div>
     </header>
   );
 }
