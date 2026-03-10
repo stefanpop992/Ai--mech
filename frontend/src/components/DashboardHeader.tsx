@@ -1,41 +1,45 @@
 'use client';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
 
 export default function DashboardHeader() {
   const { logout, user } = useAuth();
 
   return (
-    <header className="flex justify-between items-center px-6 py-4 bg-gray-900 border-b border-gray-800">
+    <header
+      style={{ background: 'var(--black)', borderBottom: '1px solid var(--border)' }}
+      className="flex justify-between items-center px-6 py-4"
+    >
       <div className="flex items-center gap-3">
-        <span className="text-2xl">🔧</span>
+        <span className="text-xl">🔧</span>
         <div>
-          <h1 className="text-lg font-bold text-white leading-none">Mitt AI-Garage</h1>
+          <h1 className="font-bebas text-xl tracking-widest leading-none" style={{ color: 'var(--white)' }}>
+            MY<span style={{ color: 'var(--red)' }}>GARAGE</span>
+          </h1>
           {user && (
-            <p className="text-xs text-gray-400 mt-0.5">{user.email}</p>
+            <p className="font-dm-mono text-xs tracking-wider mt-0.5" style={{ color: 'var(--dim)' }}>
+              {user.email}
+            </p>
           )}
         </div>
       </div>
 
       <div className="flex items-center gap-2">
         <Link href="/settings">
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
+          <button
+            style={{ border: '1px solid var(--border)', color: 'var(--silver)', background: 'transparent' }}
+            className="font-dm-mono text-xs uppercase tracking-widest px-4 py-2 transition-colors hover:border-[var(--red)] hover:text-[var(--white)]"
           >
-            ⚙️ Inställningar
-          </Button>
+            ⚙ Inställningar
+          </button>
         </Link>
-        <Button
+        <button
           onClick={logout}
-          variant="outline"
-          size="sm"
-          className="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
+          style={{ border: '1px solid var(--border)', color: 'var(--silver)', background: 'transparent' }}
+          className="font-dm-mono text-xs uppercase tracking-widest px-4 py-2 transition-colors hover:border-[var(--red)] hover:text-[var(--white)]"
         >
           Logga ut
-        </Button>
+        </button>
       </div>
     </header>
   );

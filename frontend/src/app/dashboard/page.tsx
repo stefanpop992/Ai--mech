@@ -2,35 +2,20 @@
 import { useState } from 'react';
 import DashboardHeader from '@/components/DashboardHeader';
 import CarCard from '@/components/CarCard';
-import ChatWindow from '@/components/ChatWindow';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useCars, createCarByRegnr, createCarManual, removeCar } from '@/hooks/use-cars';
-import { type Car } from '@/lib/api-client';
+import { useCars, createCarByRegnr, createCarManual } from '@/hooks/use-cars';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 type AddMode = 'regnr' | 'manual';
-
 const emptyManual = { regnr: '', make: '', model: '', year: '', engine: '' };
 
 export default function DashboardPage() {
   const { cars, isLoading, isError } = useCars();
-  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addMode, setAddMode] = useState<AddMode>('regnr');
-  const [regnr, setRegnr] = useState('');
-  const [manual, setManual] = useState(emptyManual);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState('');
-
-  const handleSelectCar = (car: Car) => {
-    setSelectedCar((prev) => (prev?.id === car.id ? null : car));
-  };
-
-  const handleDeleteCar = async (carId: number) => {
-    await removeCar(carId);
-    setSelectedCar((prev) => (prev?.id === carId ? null : prev));
-  };
+  const [addMode, setAddMode]         = useState<AddMode>('regnr');
+  const [regnr, setRegnr]             = useState('');
+  const [manual, setManual]           = useState(emptyManual);
+  const [addLoading, setAddLoading]   = useState(false);
+  const [addError, setAddError]       = useState('');
 
   const handleClose = () => {
     setShowAddForm(false);
@@ -59,10 +44,10 @@ export default function DashboardPage() {
     setAddLoading(true);
     try {
       await createCarManual({
-        regnr: manual.regnr.trim().toUpperCase(),
-        make: manual.make.trim(),
-        model: manual.model.trim(),
-        year: Number(manual.year),
+        regnr:  manual.regnr.trim().toUpperCase(),
+        make:   manual.make.trim(),
+        model:  manual.model.trim(),
+        year:   Number(manual.year),
         engine: manual.engine.trim() || undefined,
       });
       handleClose();
@@ -73,164 +58,178 @@ export default function DashboardPage() {
     }
   };
 
+  const inputCls = "w-full px-4 py-2.5 text-sm transition-colors placeholder:text-[#444]";
+  const inputStyle = {
+    background:  'var(--steel)',
+    border:      '1px solid var(--border)',
+    color:       'var(--white)',
+    outline:     'none',
+  };
+
   return (
     <ProtectedRoute>
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <DashboardHeader />
+      <div style={{ background: 'var(--black)' }} className="min-h-screen text-foreground flex flex-col">
+        <DashboardHeader />
 
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
-        {/* Top bar */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Mina fordon</h2>
-          <Button
-            onClick={() => (showAddForm ? handleClose() : setShowAddForm(true))}
-            className="bg-blue-600 hover:bg-blue-500 text-white font-semibold"
-          >
-            {showAddForm ? 'Avbryt' : '+ Lägg till bil'}
-          </Button>
-        </div>
+        <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
 
-        {/* Add car form */}
-        {showAddForm && (
-          <div className="mb-6 bg-gray-800 border border-gray-700 rounded-xl p-5">
-            {/* Tabs */}
-            <div className="flex gap-1 bg-gray-900 rounded-lg p-1 mb-5 w-fit">
-              <button
-                onClick={() => { setAddMode('regnr'); setAddError(''); }}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  addMode === 'regnr'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Via regnummer
-              </button>
-              <button
-                onClick={() => { setAddMode('manual'); setAddError(''); }}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  addMode === 'manual'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Manuellt
-              </button>
-            </div>
+          {/* Top bar */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-bebas text-3xl tracking-widest" style={{ color: 'var(--white)' }}>
+              Mitt garage
+            </h2>
+            <button
+              onClick={() => (showAddForm ? handleClose() : setShowAddForm(true))}
+              style={{ background: showAddForm ? 'transparent' : 'var(--red)', color: 'var(--white)', border: showAddForm ? '1px solid var(--border)' : 'none' }}
+              className="font-dm-mono text-xs uppercase tracking-widest px-5 py-2.5 transition-all"
+            >
+              {showAddForm ? 'Avbryt' : '+ Lägg till bil'}
+            </button>
+          </div>
 
-            {addError && (
-              <div className="bg-red-900/40 border border-red-700 text-red-300 text-sm px-3 py-2 rounded-md mb-4">
-                {addError}
-              </div>
-            )}
+          {/* Add car form */}
+          {showAddForm && (
+            <div style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }} className="mb-6 p-5">
 
-            {/* Auto lookup by regnr */}
-            {addMode === 'regnr' && (
-              <>
-                <p className="text-sm text-gray-400 mb-3">Vi hämtar bilens uppgifter automatiskt via registreringsnumret.</p>
-                <form onSubmit={handleAddByRegnr} className="flex gap-3">
-                  <Input
-                    placeholder="Regnummer (t.ex. ABC123)"
-                    value={regnr}
-                    onChange={(e) => setRegnr(e.target.value.toUpperCase())}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 max-w-xs"
-                  />
-                  <Button type="submit" disabled={addLoading || !regnr.trim()} className="bg-blue-600 hover:bg-blue-500">
-                    {addLoading ? 'Söker...' : 'Lägg till'}
-                  </Button>
-                </form>
-              </>
-            )}
-
-            {/* Manual entry */}
-            {addMode === 'manual' && (
-              <>
-                <p className="text-sm text-gray-400 mb-3">Fyll i bilens uppgifter själv.</p>
-                <form onSubmit={handleAddManual} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Regnummer (t.ex. ABC123)"
-                    value={manual.regnr}
-                    onChange={(e) => setManual({ ...manual, regnr: e.target.value.toUpperCase() })}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
-                  />
-                  <Input
-                    placeholder="Märke (t.ex. Volvo)"
-                    value={manual.make}
-                    onChange={(e) => setManual({ ...manual, make: e.target.value })}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
-                  />
-                  <Input
-                    placeholder="Modell (t.ex. V70)"
-                    value={manual.model}
-                    onChange={(e) => setManual({ ...manual, model: e.target.value })}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
-                  />
-                  <Input
-                    placeholder="Årsmodell (t.ex. 2018)"
-                    type="number"
-                    min="1900"
-                    max="2099"
-                    value={manual.year}
-                    onChange={(e) => setManual({ ...manual, year: e.target.value })}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500"
-                  />
-                  <Input
-                    placeholder="Motor (valfritt, t.ex. 2.0 TDI)"
-                    value={manual.engine}
-                    onChange={(e) => setManual({ ...manual, engine: e.target.value })}
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 sm:col-span-2"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={addLoading}
-                    className="sm:col-span-2 bg-blue-600 hover:bg-blue-500 font-semibold"
+              {/* Tabs */}
+              <div style={{ background: 'var(--black)', border: '1px solid var(--border)' }}
+                className="inline-flex p-1 mb-5">
+                {(['regnr', 'manual'] as AddMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => { setAddMode(mode); setAddError(''); }}
+                    style={{
+                      background: addMode === mode ? 'var(--red)' : 'transparent',
+                      color:      addMode === mode ? 'var(--white)' : 'var(--dim)',
+                    }}
+                    className="font-dm-mono text-xs uppercase tracking-widest px-4 py-1.5 transition-colors"
                   >
-                    {addLoading ? 'Sparar...' : 'Spara fordon'}
-                  </Button>
-                </form>
-              </>
-            )}
-          </div>
-        )}
+                    {mode === 'regnr' ? 'Via regnummer' : 'Manuellt'}
+                  </button>
+                ))}
+              </div>
 
-        {/* States */}
-        {isLoading && <div className="text-gray-400 py-12 text-center">Laddar fordon...</div>}
-        {isError && <div className="text-red-400 py-12 text-center">Kunde inte hämta fordon. Är du inloggad?</div>}
-        {!isLoading && !isError && cars.length === 0 && (
-          <div className="text-center py-16 text-gray-500">
-            <p className="text-5xl mb-4">🚗</p>
-            <p className="text-lg font-medium text-gray-300">Inga fordon i garaget</p>
-            <p className="text-sm mt-1">Klicka på "+ Lägg till bil" för att komma igång.</p>
-          </div>
-        )}
+              {addError && (
+                <div style={{ background: 'rgba(224,48,48,0.1)', border: '1px solid var(--red)', color: 'var(--red)' }}
+                  className="font-dm-mono text-xs px-3 py-2 mb-4">
+                  {addError}
+                </div>
+              )}
 
-        {/* Car grid */}
-        {cars.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {cars.map((car) => (
-              <CarCard
-                key={car.id}
-                car={car}
-                isSelected={selectedCar?.id === car.id}
-                onSelect={handleSelectCar}
-                onDelete={handleDeleteCar}
-              />
-            ))}
-          </div>
-        )}
+              {addMode === 'regnr' && (
+                <>
+                  <p className="font-dm-mono text-xs tracking-wide mb-3" style={{ color: 'var(--dim)' }}>
+                    Vi hämtar bilens uppgifter automatiskt via registreringsnumret.
+                  </p>
+                  <form onSubmit={handleAddByRegnr} className="flex gap-3">
+                    <input
+                      placeholder="Regnummer (t.ex. ABC123)"
+                      value={regnr}
+                      onChange={(e) => setRegnr(e.target.value.toUpperCase())}
+                      required
+                      style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls + ' max-w-xs'}
+                    />
+                    <button
+                      type="submit"
+                      disabled={addLoading || !regnr.trim()}
+                      style={{ background: 'var(--red)', color: 'var(--white)' }}
+                      className="font-dm-mono text-xs uppercase tracking-widest px-5 py-2.5 disabled:opacity-50 transition-opacity"
+                    >
+                      {addLoading ? 'Söker...' : 'Lägg till'}
+                    </button>
+                  </form>
+                </>
+              )}
 
-        {/* Chat window */}
-        {selectedCar && (
-          <div className="mt-6">
-            <ChatWindow car={selectedCar} />
-          </div>
-        )}
-      </main>
-    </div>
+              {addMode === 'manual' && (
+                <>
+                  <p className="font-dm-mono text-xs tracking-wide mb-3" style={{ color: 'var(--dim)' }}>
+                    Fyll i bilens uppgifter själv.
+                  </p>
+                  <form onSubmit={handleAddManual} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input placeholder="Regnummer (t.ex. ABC123)" value={manual.regnr}
+                      onChange={(e) => setManual({ ...manual, regnr: e.target.value.toUpperCase() })}
+                      required style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls} />
+                    <input placeholder="Märke (t.ex. Volvo)" value={manual.make}
+                      onChange={(e) => setManual({ ...manual, make: e.target.value })}
+                      required style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls} />
+                    <input placeholder="Modell (t.ex. V70)" value={manual.model}
+                      onChange={(e) => setManual({ ...manual, model: e.target.value })}
+                      required style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls} />
+                    <input placeholder="Årsmodell (t.ex. 2018)" type="number" min="1900" max="2099"
+                      value={manual.year}
+                      onChange={(e) => setManual({ ...manual, year: e.target.value })}
+                      required style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls} />
+                    <input placeholder="Motor (valfritt, t.ex. 2.0 TDI)" value={manual.engine}
+                      onChange={(e) => setManual({ ...manual, engine: e.target.value })}
+                      style={inputStyle}
+                      onFocus={(e) => (e.target.style.borderColor = 'var(--red)')}
+                      onBlur={(e)  => (e.target.style.borderColor = 'var(--border)')}
+                      className={inputCls + ' sm:col-span-2'} />
+                    <button
+                      type="submit"
+                      disabled={addLoading}
+                      style={{ background: 'var(--red)', color: 'var(--white)' }}
+                      className="sm:col-span-2 font-dm-mono text-xs uppercase tracking-widest py-3 disabled:opacity-50 transition-opacity"
+                    >
+                      {addLoading ? 'Sparar...' : 'Spara fordon'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* States */}
+          {isLoading && (
+            <div className="font-dm-mono text-xs uppercase tracking-widest py-12 text-center"
+              style={{ color: 'var(--dim)' }}>
+              Laddar fordon...
+            </div>
+          )}
+          {isError && (
+            <div className="font-dm-mono text-xs uppercase tracking-widest py-12 text-center"
+              style={{ color: 'var(--red)' }}>
+              Kunde inte hämta fordon. Är du inloggad?
+            </div>
+          )}
+          {!isLoading && !isError && cars.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-5xl mb-4">🚗</p>
+              <p className="font-bebas text-2xl tracking-widest mb-1" style={{ color: 'var(--white)' }}>
+                Inga fordon i garaget
+              </p>
+              <p className="font-dm-mono text-xs tracking-wide" style={{ color: 'var(--dim)' }}>
+                Klicka på "+ Lägg till bil" för att komma igång.
+              </p>
+            </div>
+          )}
+
+          {/* Car grid */}
+          {cars.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {cars.map((car) => (
+                <CarCard key={car.id} car={car} />
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
     </ProtectedRoute>
   );
 }

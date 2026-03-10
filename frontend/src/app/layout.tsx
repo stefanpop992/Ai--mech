@@ -1,8 +1,8 @@
 import './globals.css';
-import { AuthProvider } from '@/context/AuthContext'; // Importera din nya AuthProvider
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata = {
-  title: 'AI-Mech Garage',
+  title: 'MyGarage – Dina Bilar. Din Kontroll.',
   description: 'Hantera dina fordon med AI',
 };
 
@@ -13,8 +13,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="sv">
-      <body className="min-h-screen bg-background font-sans antialiased">
-        {/* Allt inuti AuthProvider får tillgång till inloggnings-logiken */}
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-background font-dm-sans antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>
