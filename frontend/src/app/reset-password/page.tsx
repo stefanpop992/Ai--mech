@@ -2,9 +2,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 function ResetPasswordForm() {
   const [password, setPassword] = useState('');
@@ -61,73 +58,201 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-white">Mitt AI-Garage</h1>
-          <p className="text-gray-400 mt-1 text-sm">Sätt ett nytt lösenord</p>
-        </div>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#080808',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0 16px',
+    }}>
+      <div style={{ width: '100%', maxWidth: '400px' }}>
 
-        <Card className="bg-gray-800 border-gray-700 text-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl text-white">Nytt lösenord</CardTitle>
-            <CardDescription className="text-gray-400">
-              Ange ditt nya lösenord nedan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {success ? (
-              <div className="text-center space-y-4">
-                <div className="text-4xl">✅</div>
-                <p className="text-gray-300 text-sm">
-                  Lösenordet har uppdaterats! Du skickas till inloggningen...
-                </p>
+        {/* Card */}
+        <div style={{
+          backgroundColor: '#111111',
+          border: '1px solid #2a2a2a',
+          padding: '48px',
+          borderRadius: '4px',
+        }}>
+
+          {/* Logo */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <span style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: '28px',
+              letterSpacing: '4px',
+              color: '#f0f0f0',
+            }}>MY</span>
+            <span style={{
+              fontFamily: "'Bebas Neue', sans-serif",
+              fontSize: '28px',
+              letterSpacing: '4px',
+              color: '#e03030',
+            }}>GARAGE</span>
+          </div>
+
+          {/* Heading */}
+          <h1 style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            color: '#f0f0f0',
+            letterSpacing: '2px',
+            textAlign: 'center',
+            margin: '0 0 8px 0',
+            fontSize: '24px',
+          }}>Nytt lösenord</h1>
+
+          {/* Subtext */}
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            color: '#888',
+            fontSize: '14px',
+            textAlign: 'center',
+            margin: '0 0 32px 0',
+          }}>
+            Ange ditt nya lösenord nedan
+          </p>
+
+          {success ? (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '36px', marginBottom: '16px' }}>✅</div>
+              <p style={{
+                fontFamily: "'DM Sans', sans-serif",
+                color: '#888',
+                fontSize: '14px',
+              }}>
+                Lösenordet har uppdaterats! Du skickas till inloggningen...
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+              {/* Error */}
+              {error && (
+                <div style={{
+                  backgroundColor: 'rgba(224,48,48,0.1)',
+                  border: '1px solid #e03030',
+                  color: '#e03030',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: '13px',
+                  padding: '10px 14px',
+                }}>
+                  {error}
+                </div>
+              )}
+
+              {/* New password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '11px',
+                  letterSpacing: '3px',
+                  textTransform: 'uppercase',
+                  color: '#888',
+                }}>Nytt lösenord</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #2a2a2a',
+                    color: '#f0f0f0',
+                    fontFamily: "'DM Sans', sans-serif",
+                    padding: '12px 16px',
+                    outline: 'none',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#e03030'}
+                  onBlur={(e) => e.target.style.borderColor = '#2a2a2a'}
+                />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {error && (
-                  <div className="bg-red-900/40 border border-red-700 text-red-300 text-sm px-3 py-2 rounded-md">
-                    {error}
-                  </div>
-                )}
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-300">Nytt lösenord</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus-visible:ring-blue-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-gray-300">Bekräfta lösenord</label>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-500 focus-visible:ring-blue-500"
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={loading || !token}
-                  className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold"
+
+              {/* Confirm password */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{
+                  fontFamily: "'DM Mono', monospace",
+                  fontSize: '11px',
+                  letterSpacing: '3px',
+                  textTransform: 'uppercase',
+                  color: '#888',
+                }}>Bekräfta lösenord</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  style={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #2a2a2a',
+                    color: '#f0f0f0',
+                    fontFamily: "'DM Sans', sans-serif",
+                    padding: '12px 16px',
+                    outline: 'none',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#e03030'}
+                  onBlur={(e) => e.target.style.borderColor = '#2a2a2a'}
+                />
+              </div>
+
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={loading || !token}
+                style={{
+                  backgroundColor: '#e03030',
+                  color: '#ffffff',
+                  fontFamily: "'DM Mono', monospace",
+                  textTransform: 'uppercase',
+                  letterSpacing: '3px',
+                  fontSize: '13px',
+                  padding: '16px 40px',
+                  width: '100%',
+                  border: 'none',
+                  cursor: loading || !token ? 'not-allowed' : 'pointer',
+                  opacity: loading || !token ? 0.6 : 1,
+                  clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
+                  transition: 'box-shadow 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!loading && token) (e.target as HTMLButtonElement).style.boxShadow = '0 0 30px rgba(224,48,48,0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.target as HTMLButtonElement).style.boxShadow = 'none';
+                }}
+              >
+                {loading ? 'Sparar...' : 'Spara nytt lösenord'}
+              </button>
+
+              {/* Back to login */}
+              <div style={{ textAlign: 'center' }}>
+                <Link
+                  href="/login"
+                  style={{
+                    fontFamily: "'DM Mono', monospace",
+                    fontSize: '11px',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#888',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = '#f0f0f0'}
+                  onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = '#888'}
                 >
-                  {loading ? 'Sparar...' : 'Spara nytt lösenord'}
-                </Button>
-                <p className="text-center text-sm text-gray-400">
-                  <Link href="/login" className="text-blue-400 hover:text-blue-300">
-                    Tillbaka till inloggning
-                  </Link>
-                </p>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+                  Tillbaka till inloggning
+                </Link>
+              </div>
+
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

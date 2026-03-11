@@ -286,7 +286,24 @@ export default function LandingPage() {
           <li><a href="#how">Hur det fungerar</a></li>
           <li><a href="#testimonials">Recensioner</a></li>
         </ul>
-        <Link href="/register" className="nav-cta">Registrera dig</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <Link href="/login" style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: '11px',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            color: 'var(--muted)',
+            background: 'transparent',
+            border: 'none',
+            textDecoration: 'none',
+            cursor: 'none',
+            transition: 'color 0.2s',
+          }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--white)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--muted)')}
+          >Logga in</Link>
+          <Link href="/register" className="nav-cta">Registrera dig</Link>
+        </div>
       </nav>
 
       <section className="hero">
