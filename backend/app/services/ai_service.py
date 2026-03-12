@@ -26,7 +26,7 @@ def get_ai_response(
     car_make: str,
     car_model: str,
     car_year: int,
-    car_engine: str,
+    car_engine: str | None,
     question: str,
     history: list[dict] | None = None,
 ) -> str:
@@ -45,7 +45,10 @@ def get_ai_response(
             )
 
     # Lägg till aktuell fråga med bilkontext
-    user_message = f"[Bil: {car_make} {car_model} {car_year}]\n\n{question}"
+    engine_info = f" {car_engine}" if car_engine else ""
+    user_message = (
+        f"[Bil: {car_make} {car_model} {car_year}{engine_info}]\n\n{question}"
+    )
     contents.append(
         types.Content(
             role="user",
@@ -54,7 +57,7 @@ def get_ai_response(
     )
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-05-20",
+        model="gemini-2.5-flash-lite",
         contents=contents,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,

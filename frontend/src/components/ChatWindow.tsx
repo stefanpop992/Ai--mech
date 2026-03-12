@@ -1,8 +1,14 @@
 'use client';
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown from 'react-markdown';
 import { useState, useRef, useEffect } from 'react';
 import { askAI, type Car } from '@/lib/api-client';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,7 +26,7 @@ export default function ChatWindow({ car }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'ai',
-      content: `Hej! Jag är din AI-mekaniker. Vad krånglar med din ${car.make} ${car.model} (${car.year})?`,
+      content: `Hej! Jag är din AI-mekaniker. Ställ gärna frågor om din **${car.make} ${car.model} (${car.year})** — jag hjälper dig med felsökning, underhåll och reparationer.`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -32,26 +38,44 @@ export default function ChatWindow({ car }: ChatWindowProps) {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMsg: Message = { role: 'user', content: input };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await askAI(car.id, userMsg.content);
+      // Skicka med historiken (exkludera det initiala hälsningsmeddelandet)
+      const history = updatedMessages
+        .slice(1) // Hoppa över AI:ns första hälsning
+        .slice(-20) // Max 20 meddelanden för att inte överbelasta
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const response = await askAI(car.id, userMsg.content, history);
       setMessages((prev) => [
         ...prev,
         { role: 'ai', content: response.answer },
       ]);
-    } catch {
+    } catch (err: unknown) {
+      let errorMessage =
+        'Ursäkta, något gick fel. Försök igen om en stund.';
+
+      if (err instanceof Error && 'status' in err) {
+        const status = (err as { status: number }).status;
+        if (status === 429) {
+          errorMessage =
+            'Du har nått maxgränsen för frågor just nu. Vänta en stund och försök igen.';
+        } else if (status === 401) {
+          errorMessage =
+            'Din session har gått ut. Ladda om sidan och logga in igen.';
+        }
+      }
+
       setMessages((prev) => [
         ...prev,
-        {
-          role: 'ai',
-          content: 'Ursäkta, jag tappade anslutningen till servern. Är backend igång?',
-        },
+        { role: 'ai', content: errorMessage },
       ]);
     } finally {
       setIsLoading(false);
@@ -66,7 +90,7 @@ export default function ChatWindow({ car }: ChatWindowProps) {
           <span>
             AI-Mekaniker —{' '}
             <span className="text-blue-300 font-normal">
-              {car.make} {car.model}
+              {car.make} {car.model} ({car.year})
             </span>
           </span>
         </CardTitle>
@@ -81,19 +105,16 @@ export default function ChatWindow({ car }: ChatWindowProps) {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                    msg.role === 'user'
+                  className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
                       ? 'bg-blue-600 text-white rounded-br-sm'
                       : 'bg-gray-700 text-gray-100 rounded-bl-sm border border-gray-600'
-                  }`}
+                    }`}
                 >
                   {msg.role === 'user' ? (
                     msg.content
                   ) : (
                     <div className="prose prose-invert prose-sm max-w-none">
-                      <ReactMarkdown>
-                        {msg.content}
-                      </ReactMarkdown>
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   )}
                 </div>
@@ -102,9 +123,18 @@ export default function ChatWindow({ car }: ChatWindowProps) {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-700 border border-gray-600 px-4 py-3 rounded-2xl rounded-bl-sm flex gap-1 items-center">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
                 </div>
               </div>
             )}

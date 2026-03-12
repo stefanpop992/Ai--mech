@@ -64,6 +64,7 @@ def ask_mechanic(
         car_make=car.make,
         car_model=car.model,
         car_year=car.year,
+        car_engine=car.engine,
         question=payload.question,
         history=history,
     )

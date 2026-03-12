@@ -49,10 +49,14 @@ export async function deleteCar(carId: number) {
   if (!res.ok) throw new Error('Kunde inte ta bort bil');
 }
 
-export async function askAI(carId: number, question: string) {
+export async function askAI(
+  carId: number,
+  question: string,
+  history: { role: string; content: string }[] = [],
+) {
   return apiFetch<{ answer: string }>('/ai/ask', {
     method: 'POST',
-    body: JSON.stringify({ car_id: carId, question }),
+    body: JSON.stringify({ car_id: carId, question, history }),
   });
 }
 
