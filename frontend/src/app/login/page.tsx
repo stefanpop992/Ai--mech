@@ -19,8 +19,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch {
-      setError('Inloggningen misslyckades. Kontrollera e-post och lösenord.');
+    } catch (err: any) {
+      if (err?.status === 403) {
+        setError('Du måste bekräfta din e-postadress innan du loggar in. Kolla din inkorg.');
+      } else {
+        setError('Inloggningen misslyckades. Kontrollera e-post och lösenord.');
+      }
     } finally {
       setLoading(false);
     }

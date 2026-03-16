@@ -1,7 +1,7 @@
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 const AuthContext = createContext<any>(null);
 
@@ -20,7 +20,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pass }),
     });
-    if (!res.ok) throw new Error('Login failed');
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const err: any = new Error(data.detail || 'Login failed');
+      err.status = res.status;
+      throw err;
+    }
     await fetchMe();
   };
 
@@ -29,7 +34,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'POST',
       credentials: 'include',
     });
-    localStorage.removeItem('token');
     setUser(null);
     window.location.href = '/login';
   };

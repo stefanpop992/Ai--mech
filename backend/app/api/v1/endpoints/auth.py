@@ -1,19 +1,34 @@
-from fastapi import APIRouter, Depends, HTTPException, Response
+import secrets
+from datetime import datetime, timedelta, timezone
+
+import resend
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import COOKIE_NAME, get_current_user
 from app.core.config import settings
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import generate_session_token, hash_password, verify_password
+from app.db.models.session import Session as DBSession
 from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.auth import LoginRequest
 from app.schemas.user import UserCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-COOKIE_NAME = "access_token"
+
+resend.api_key = settings.RESEND_API_KEY
 
 
-def set_cookie(response: Response, token: str):
+def _create_session(db: Session, user_id: int) -> str:
+    token = generate_session_token()
+    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.SESSION_EXPIRE_DAYS)
+    session = DBSession(user_id=user_id, token=token, expires_at=expires_at)
+    db.add(session)
+    db.commit()
+    return token
+
+
+def _set_cookie(response: Response, token: str) -> None:
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
@@ -21,19 +36,58 @@ def set_cookie(response: Response, token: str):
         secure=bool(settings.COOKIE_SECURE),
         samesite="lax",
         path="/",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        max_age=settings.SESSION_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
 
-@router.post("/register", response_model=UserRead)
+@router.post("/register")
 def register(payload: UserCreate, db: Session = Depends(get_db)):
+    print("=== REGISTER HIT ===")
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=409, detail="Email already registered")
-    user = User(email=payload.email, hashed_password=hash_password(payload.password))
+
+    user = User(
+        email=payload.email,
+        hashed_password=hash_password(payload.password),
+        is_verified=False,
+        verification_token=secrets.token_hex(32),
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
+
+    verify_url = f"{settings.FRONTEND_ORIGIN}/verify-email?token={user.verification_token}"
+    print(f"=== SENDING EMAIL TO: {user.email} ===")
+    print(f"=== RESEND API KEY EXISTS: {bool(settings.RESEND_API_KEY)} ===")
+    try:
+        resend.Emails.send({
+            "from": settings.MAIL_FROM,
+            "to": user.email,
+            "subject": "Aktivera ditt konto — MyGarage",
+            "html": f"""
+                <h2>Välkommen till MyGarage!</h2>
+                <p>Klicka på länken nedan för att aktivera ditt konto.</p>
+                <a href="{verify_url}">Aktivera konto</a>
+                <p>Om du inte skapat något konto kan du ignorera detta mail.</p>
+            """,
+        })
+        print("=== EMAIL SENT OK ===")
+    except Exception as e:
+        print(f"=== EMAIL FAILED: {e} ===")
+        raise HTTPException(status_code=500, detail=f"Email fel: {str(e)}")
+
+    return {"message": "Kolla din mail för att aktivera ditt konto"}
+
+
+@router.get("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.verification_token == token).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Ogiltig länk")
+    user.is_verified = True
+    user.verification_token = None
+    db.commit()
+    return {"message": "Kontot är aktiverat"}
 
 
 @router.post("/login")
@@ -41,13 +95,22 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
     user = db.query(User).filter(User.email == payload.email).first()
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token(user.id)
-    set_cookie(response, token)
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Bekräfta din e-postadress innan du loggar in. Kolla din inkorg.",
+        )
+    token = _create_session(db, user.id)
+    _set_cookie(response, token)
     return {"ok": True}
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    token = request.cookies.get(COOKIE_NAME)
+    if token:
+        db.query(DBSession).filter(DBSession.token == token).delete()
+        db.commit()
     response.delete_cookie(key=COOKIE_NAME, path="/")
     return {"ok": True}
 

@@ -45,18 +45,28 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
     db.commit()
 
     # Send email
-    reset_url = f"{settings.FRONTEND_ORIGIN}/reset-password?token={token}"
-    resend.Emails.send({
-        "from": settings.MAIL_FROM,
-        "to": user.email,
-        "subject": "Återställ ditt lösenord — AI Mechanic",
-        "html": f"""
-            <h2>Återställ ditt lösenord</h2>
-            <p>Klicka på länken nedan för att återställa ditt lösenord. Länken är giltig i 30 minuter.</p>
-            <a href="{reset_url}">Återställ lösenord</a>
-            <p>Om du inte begärt detta kan du ignorera detta mail.</p>
-        """
-    })
+    reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
+    print(f"[forgot-password] Sending reset email to {user.email}")
+    print(f"[forgot-password] Reset URL: {reset_url}")
+    print(f"[forgot-password] RESEND_API_KEY set: {bool(settings.RESEND_API_KEY)}")
+    print(f"[forgot-password] MAIL_FROM: {settings.MAIL_FROM}")
+
+    try:
+        result = resend.Emails.send({
+            "from": settings.MAIL_FROM,
+            "to": user.email,
+            "subject": "Återställ ditt lösenord — AI Mechanic",
+            "html": f"""
+                <h2>Återställ ditt lösenord</h2>
+                <p>Klicka på länken nedan för att återställa ditt lösenord. Länken är giltig i 30 minuter.</p>
+                <a href="{reset_url}">Återställ lösenord</a>
+                <p>Om du inte begärt detta kan du ignorera detta mail.</p>
+            """,
+        })
+        print(f"[forgot-password] Resend response: {result}")
+    except Exception as e:
+        print(f"[forgot-password] ERROR sending email: {e}")
+        raise HTTPException(status_code=500, detail=f"Kunde inte skicka mail: {e}")
 
     return {"message": "Om e-posten finns skickar vi en återställningslänk."}
 

@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 
@@ -15,6 +15,12 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[object] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    # Email verification
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    verification_token: Mapped[Optional[str]] = mapped_column(
+        String(128), nullable=True, unique=True
     )
 
     # Password reset

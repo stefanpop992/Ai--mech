@@ -7,11 +7,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     REDIS_URL: str | None = None
 
-    JWT_SECRET: str
-    JWT_ALG: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    SESSION_EXPIRE_DAYS: int = 30
 
     FRONTEND_ORIGIN: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost"
     COOKIE_SECURE: bool = False
 
     GEMINI_API_KEY: str

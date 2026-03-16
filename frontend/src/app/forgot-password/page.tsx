@@ -14,7 +14,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      await fetch('http://localhost:8000/api/v1/auth/forgot-password', {
+      await fetch('/api/v1/auth/forgot-password', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

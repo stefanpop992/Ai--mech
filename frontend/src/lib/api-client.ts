@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 
 // All requests use credentials: 'include' so the browser sends the auth cookie automatically
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
