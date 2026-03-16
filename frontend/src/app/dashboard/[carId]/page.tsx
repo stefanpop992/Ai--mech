@@ -6,14 +6,15 @@ import ChatWindow from '@/components/ChatWindow';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useCars } from '@/hooks/use-cars';
 import { type Car } from '@/lib/api-client';
+import Documents from '@/components/Documents';
 
 type Tab = 'info' | 'documents' | 'parts' | 'chat';
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'info',      label: 'Teknisk info' },
+  { id: 'info', label: 'Teknisk info' },
   { id: 'documents', label: 'Dokument / Manualer' },
-  { id: 'parts',     label: 'Delar' },
-  { id: 'chat',      label: 'AI-Chat' },
+  { id: 'parts', label: 'Delar' },
+  { id: 'chat', label: 'AI-Chat' },
 ];
 
 // ── Teknisk info ──────────────────────────────────────────────────────────────
@@ -43,29 +44,29 @@ function TeknsikInfo({ car }: { car: Car }) {
         {
           title: 'Grundinfo',
           rows: [
-            { label: 'Märke',               value: car.make   },
-            { label: 'Modell',              value: car.model  },
-            { label: 'Årsmodell',           value: car.year   },
-            { label: 'Motor',               value: car.engine },
-            { label: 'Registreringsnummer', value: car.regnr  },
+            { label: 'Märke', value: car.make },
+            { label: 'Modell', value: car.model },
+            { label: 'Årsmodell', value: car.year },
+            { label: 'Motor', value: car.engine },
+            { label: 'Registreringsnummer', value: car.regnr },
           ],
         },
         {
           title: 'Fordonsdata',
           rows: [
-            { label: 'VIN-nummer',          value: null },
-            { label: 'Bränsletyp',          value: null },
-            { label: 'Växellåda',           value: null },
-            { label: 'Färg',                value: null },
+            { label: 'VIN-nummer', value: null },
+            { label: 'Bränsletyp', value: null },
+            { label: 'Växellåda', value: null },
+            { label: 'Färg', value: null },
             { label: 'Mätarställning (mil)', value: null },
           ],
         },
         {
           title: 'Diagnostik',
           rows: [
-            { label: 'OBD-felkoder',  value: null },
+            { label: 'OBD-felkoder', value: null },
             { label: 'Senaste service', value: null },
-            { label: 'Nästa service',   value: null },
+            { label: 'Nästa service', value: null },
           ],
         },
       ].map((section) => (
@@ -91,58 +92,17 @@ function TeknsikInfo({ car }: { car: Car }) {
   );
 }
 
-// ── Dokument / Manualer ───────────────────────────────────────────────────────
-
-const DOCUMENT_TYPES = [
-  { icon: '📖', label: 'Instruktionsbok' },
-  { icon: '🔧', label: 'Servicebok' },
-  { icon: '🛠️', label: 'Reparationsmanual' },
-  { icon: '🛡️', label: 'Försäkringsdokument' },
-  { icon: '📋', label: 'Besiktningsprotokoll' },
-  { icon: '🧾', label: 'Kvitton / Fakturor' },
-];
-
-function Documents() {
-  return (
-    <div>
-      <p className="font-dm-mono text-xs uppercase tracking-widest mb-5" style={{ color: 'var(--dim)' }}>
-        Ladda upp och hantera dokument för ditt fordon.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px"
-        style={{ background: 'var(--border)' }}>
-        {DOCUMENT_TYPES.map((doc) => (
-          <button
-            key={doc.label}
-            style={{ background: 'var(--carbon)', color: 'var(--white)' }}
-            className="p-5 flex items-center gap-4 text-left group transition-all hover:brightness-125"
-          >
-            <span className="text-2xl">{doc.icon}</span>
-            <div>
-              <p className="font-dm-sans text-sm font-medium" style={{ color: 'var(--white)' }}>
-                {doc.label}
-              </p>
-              <p className="font-dm-mono text-xs uppercase tracking-wider mt-0.5 transition-colors"
-                style={{ color: 'var(--dim)' }}>
-                Lägg till dokument
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ── Delar ─────────────────────────────────────────────────────────────────────
 
 const PART_CATEGORIES = [
-  { icon: '🔩', label: 'Filter',         sub: 'Olje-, luft-, bränslefilter' },
-  { icon: '🛞', label: 'Bromsar',        sub: 'Skivor, belägg, bromsvätska' },
+  { icon: '🔩', label: 'Filter', sub: 'Olje-, luft-, bränslefilter' },
+  { icon: '🛞', label: 'Bromsar', sub: 'Skivor, belägg, bromsvätska' },
   { icon: '🏎️', label: 'Däck & Fälgar', sub: 'Sommar-, vinterdäck' },
   { icon: '⚙️', label: 'Kamrem / Kedja', sub: 'Byte & intervall' },
-  { icon: '🔋', label: 'Batteri',        sub: 'Kapacitet, ålder' },
-  { icon: '💧', label: 'Torkare',        sub: 'Fram & bak' },
-  { icon: '💡', label: 'Belysning',      sub: 'Glödlampor, LED' },
+  { icon: '🔋', label: 'Batteri', sub: 'Kapacitet, ålder' },
+  { icon: '💧', label: 'Torkare', sub: 'Fram & bak' },
+  { icon: '💡', label: 'Belysning', sub: 'Glödlampor, LED' },
   { icon: '🛢️', label: 'Olja & Vätskor', sub: 'Motorolja, kylvätska' },
 ];
 
@@ -289,7 +249,7 @@ export default function CarDetailPage() {
                 onClick={() => setActiveTab(tab.id)}
                 style={{
                   background: activeTab === tab.id ? 'var(--red)' : 'transparent',
-                  color:      activeTab === tab.id ? 'var(--white)' : 'var(--muted, #888)',
+                  color: activeTab === tab.id ? 'var(--white)' : 'var(--muted, #888)',
                 }}
                 className="flex-1 min-w-fit px-3 py-2 font-dm-mono text-xs uppercase tracking-[2px] whitespace-nowrap transition-colors"
                 onMouseEnter={(e) => {
@@ -305,10 +265,10 @@ export default function CarDetailPage() {
           </div>
 
           {/* Content */}
-          {activeTab === 'info'      && <TeknsikInfo car={car} />}
-          {activeTab === 'documents' && <Documents />}
-          {activeTab === 'parts'     && <Parts />}
-          {activeTab === 'chat'      && <ChatWindow car={car} />}
+          {activeTab === 'info' && <TeknsikInfo car={car} />}
+          {activeTab === 'documents' && <Documents car={car} />}
+          {activeTab === 'parts' && <Parts />}
+          {activeTab === 'chat' && <ChatWindow car={car} />}
         </main>
       </div>
     </ProtectedRoute>
