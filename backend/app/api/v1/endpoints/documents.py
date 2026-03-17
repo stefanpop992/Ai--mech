@@ -83,6 +83,14 @@ async def upload_document(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    print("=== UPLOAD HIT ===")
+    print(f"=== CAR ID: {car_id} ===")
+    print(f"=== CATEGORY: {category} ===")
+    print(f"=== FILE: {file.filename} ===")
+    print(f"=== CONTENT TYPE: {file.content_type} ===")
+    print(f"=== UPLOAD_DIR: {UPLOAD_DIR} ===")
+    print(f"=== UPLOAD_DIR exists: {UPLOAD_DIR.exists()} ===")
+
     _verify_car_in_garage(db, current_user, car_id)
 
     if category not in VALID_CATEGORIES:
@@ -97,34 +105,83 @@ async def upload_document(
             detail="Filtypen stöds inte. Tillåtna: PDF, bilder (JPG/PNG/WebP), Word-dokument, textfiler.",
         )
 
-    contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Filen är för stor (max 10 MB).")
+    try:
+        contents = await file.read()
+        print(f"=== FILE SIZE: {len(contents)} bytes ===")
 
-    user_car_dir = UPLOAD_DIR / str(current_user.id) / str(car_id)
-    user_car_dir.mkdir(parents=True, exist_ok=True)
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="Filen är för stor (max 10 MB).")
 
-    ext = Path(file.filename).suffix if file.filename else ""
-    stored_name = f"{uuid.uuid4().hex}{ext}"
-    stored_path = user_car_dir / stored_name
+        # Ensure upload directory exists
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        user_car_dir = UPLOAD_DIR / str(current_user.id) / str(car_id)
+        user_car_dir.mkdir(parents=True, exist_ok=True)
+        print(f"=== SAVE DIR: {user_car_dir} ===")
 
-    with open(stored_path, "wb") as f:
-        f.write(contents)
+        ext = Path(file.filename).suffix if file.filename else ""
+        stored_name = f"{uuid.uuid4().hex}{ext}"
+        stored_path = user_car_dir / stored_name
+        print(f"=== STORED PATH: {stored_path} ===")
 
-    doc = CarDocument(
-        car_id=car_id,
-        user_id=current_user.id,
-        category=category,
-        filename=file.filename or "unknown",
-        stored_path=str(stored_path),
-        file_size=len(contents),
-        mime_type=file.content_type or "application/octet-stream",
+        with open(stored_path, "wb") as f:
+            f.write(contents)
+        print(f"=== FILE WRITTEN: {stored_path.exists()} ===")
+
+        doc = CarDocument(
+            car_id=car_id,
+            user_id=current_user.id,
+            category=category,
+            filename=file.filename or "unknown",
+            stored_path=str(stored_path),
+            file_size=len(contents),
+            mime_type=file.content_type or "application/octet-stream",
+        )
+        db.add(doc)
+        db.commit()
+        db.refresh(doc)
+        print(f"=== UPLOAD SUCCESS: doc.id={doc.id} ===")
+
+        return doc
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"=== UPLOAD ERROR: {e} ===")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Uppladdning misslyckades: {str(e)}")
+
+
+@router.get("/{doc_id}/preview")
+def preview_document(
+    car_id: int,
+    doc_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _verify_car_in_garage(db, current_user, car_id)
+
+    doc = (
+        db.query(CarDocument)
+        .filter(
+            CarDocument.id == doc_id,
+            CarDocument.car_id == car_id,
+            CarDocument.user_id == current_user.id,
+        )
+        .first()
     )
-    db.add(doc)
-    db.commit()
-    db.refresh(doc)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Dokumentet hittades inte")
 
-    return doc
+    if not os.path.exists(doc.stored_path):
+        raise HTTPException(status_code=404, detail="Filen saknas på servern")
+
+    # Serve inline so the browser renders it instead of downloading
+    return FileResponse(
+        path=doc.stored_path,
+        media_type=doc.mime_type,
+        headers={"Content-Disposition": f"inline; filename=\"{doc.filename}\""},
+    )
 
 
 @router.get("/{doc_id}/download")

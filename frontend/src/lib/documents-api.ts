@@ -49,6 +49,10 @@ export function getDocumentDownloadUrl(carId: number, docId: number): string {
     return `${API_BASE_URL}/cars/${carId}/documents/${docId}/download`;
 }
 
+export function getDocumentPreviewUrl(carId: number, docId: number): string {
+    return `${API_BASE_URL}/cars/${carId}/documents/${docId}/preview`;
+}
+
 export async function deleteDocument(carId: number, docId: number): Promise<void> {
     const res = await fetch(`${API_BASE_URL}/cars/${carId}/documents/${docId}`, {
         method: 'DELETE',

@@ -11,7 +11,7 @@ from app.core.security import generate_session_token, hash_password, verify_pass
 from app.db.models.session import Session as DBSession
 from app.db.models.user import User
 from app.db.session import get_db
-from app.schemas.auth import LoginRequest
+from app.schemas.auth import ChangeEmailRequest, ChangePasswordRequest, LoginRequest
 from app.schemas.user import UserCreate, UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -118,3 +118,34 @@ def logout(request: Request, response: Response, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserRead)
 def me(user: User = Depends(get_current_user)):
     return user
+
+
+@router.put("/change-password")
+def change_password(
+    payload: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Nuvarande lösenord är felaktigt")
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Lösenordet måste vara minst 6 tecken")
+    current_user.hashed_password = hash_password(payload.new_password)
+    db.commit()
+    return {"message": "Lösenordet har uppdaterats"}
+
+
+@router.put("/change-email")
+def change_email(
+    payload: ChangeEmailRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    existing = db.query(User).filter(
+        User.email == payload.new_email, User.id != current_user.id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="E-postadressen används redan av ett annat konto")
+    current_user.email = str(payload.new_email)
+    db.commit()
+    return {"message": "E-postadressen har uppdaterats"}

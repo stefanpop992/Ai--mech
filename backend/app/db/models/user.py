@@ -29,6 +29,10 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Profile
+    profile_picture: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    plan: Mapped[str] = mapped_column(String(20), nullable=False, server_default="free")
+
     garage: Mapped["Garage"] = relationship(
         "Garage",
         back_populates="user",

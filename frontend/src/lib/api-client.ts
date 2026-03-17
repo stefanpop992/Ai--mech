@@ -54,10 +54,20 @@ export async function askAI(
   question: string,
   history: { role: string; content: string }[] = [],
 ) {
-  return apiFetch<{ answer: string }>('/ai/ask', {
+  return apiFetch<{ answer: string; messages_remaining: number | null }>('/ai/ask', {
     method: 'POST',
     body: JSON.stringify({ car_id: carId, question, history }),
   });
+}
+
+export async function getAIUsage() {
+  return apiFetch<{ plan: string; messages_today: number | null; messages_remaining: number | null }>('/ai/usage');
+}
+
+export async function getAIHistory(carId: number) {
+  return apiFetch<{ role: string; content: string; created_at: string }[]>(
+    `/ai/history?car_id=${carId}`,
+  );
 }
 
 // Types matching backend CarRead schema

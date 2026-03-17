@@ -29,6 +29,7 @@ def get_ai_response(
     car_engine: str | None,
     question: str,
     history: list[dict] | None = None,
+    max_output_tokens: int = 1024,
 ) -> str:
     # Bygg konversationshistorik för Gemini
     contents = []
@@ -62,7 +63,7 @@ def get_ai_response(
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
             temperature=0.7,
-            max_output_tokens=1024,
+            max_output_tokens=max_output_tokens,
         ),
     )
     return response.text

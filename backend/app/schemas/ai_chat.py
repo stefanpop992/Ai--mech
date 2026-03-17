@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -14,3 +15,13 @@ class AIQuestion(BaseModel):
 
 class AIResponse(BaseModel):
     answer: str
+    messages_remaining: Optional[int] = None
+
+
+class ChatMessageRead(BaseModel):
+    role: str
+    content: str
+    created_at: str
+
+    class Config:
+        from_attributes = True
