@@ -26,8 +26,28 @@ def lookup_car(regnr: str, db: Session = Depends(get_db)):
         regnr=regnr_n,
         make=info.get("make"),
         model=info.get("model"),
+        variant=info.get("variant"),
         engine=info.get("engine"),
         year=info.get("year"),
+        vin=info.get("vin"),
+        color=info.get("color"),
+        status=info.get("status"),
+        transmission=info.get("transmission"),
+        fuel=info.get("fuel"),
+        power_hp=info.get("power_hp"),
+        power_kw=info.get("power_kw"),
+        kerb_weight=info.get("kerb_weight"),
+        length=info.get("length"),
+        width=info.get("width"),
+        meter=info.get("meter"),
+        inspection=info.get("inspection"),
+        inspection_valid_until=info.get("inspection_valid_until"),
+        manufactured=info.get("manufactured"),
+        manufactured_country=info.get("manufactured_country"),
+        registered=info.get("registered"),
+        tyre_front=info.get("tyre_front"),
+        tyre_rear=info.get("tyre_rear"),
+        raw_data=info.get("raw_data"),
     )
     db.add(car)
     db.commit()
@@ -71,16 +91,38 @@ def register_car(
             regnr=regnr,
             make=info.get("make"),
             model=info.get("model"),
+            variant=info.get("variant"),
             engine=info.get("engine"),
             year=info.get("year"),
+            vin=info.get("vin"),
+            color=info.get("color"),
+            status=info.get("status"),
+            transmission=info.get("transmission"),
+            fuel=info.get("fuel"),
+            power_hp=info.get("power_hp"),
+            power_kw=info.get("power_kw"),
+            kerb_weight=info.get("kerb_weight"),
+            length=info.get("length"),
+            width=info.get("width"),
+            meter=info.get("meter"),
+            inspection=info.get("inspection"),
+            inspection_valid_until=info.get("inspection_valid_until"),
+            manufactured=info.get("manufactured"),
+            manufactured_country=info.get("manufactured_country"),
+            registered=info.get("registered"),
+            tyre_front=info.get("tyre_front"),
+            tyre_rear=info.get("tyre_rear"),
+            raw_data=info.get("raw_data"),
         )
         db.add(car)
         db.commit()
         db.refresh(car)
 
-    link = db.query(GarageCar).filter(
-        GarageCar.garage_id == garage.id, GarageCar.car_id == car.id
-    ).first()
+    link = (
+        db.query(GarageCar)
+        .filter(GarageCar.garage_id == garage.id, GarageCar.car_id == car.id)
+        .first()
+    )
     if not link:
         db.add(GarageCar(garage_id=garage.id, car_id=car.id))
         db.commit()
@@ -110,9 +152,11 @@ def create_car_manual(
         db.commit()
         db.refresh(car)
 
-    link = db.query(GarageCar).filter(
-        GarageCar.garage_id == garage.id, GarageCar.car_id == car.id
-    ).first()
+    link = (
+        db.query(GarageCar)
+        .filter(GarageCar.garage_id == garage.id, GarageCar.car_id == car.id)
+        .first()
+    )
     if link:
         raise HTTPException(status_code=409, detail="Bilen finns redan i ditt garage")
     db.add(GarageCar(garage_id=garage.id, car_id=car.id))
@@ -128,9 +172,11 @@ def remove_car_from_my_garage(
     current_user: User = Depends(get_current_user),
 ):
     garage = get_or_create_garage(db, current_user.id)
-    link = db.query(GarageCar).filter(
-        GarageCar.garage_id == garage.id, GarageCar.car_id == car_id
-    ).first()
+    link = (
+        db.query(GarageCar)
+        .filter(GarageCar.garage_id == garage.id, GarageCar.car_id == car_id)
+        .first()
+    )
     if not link:
         raise HTTPException(status_code=404, detail="Bilen hittades inte i garaget")
     db.delete(link)
@@ -147,9 +193,11 @@ def update_car(
     current_user: User = Depends(get_current_user),
 ):
     garage = get_or_create_garage(db, current_user.id)
-    link = db.query(GarageCar).filter(
-        GarageCar.garage_id == garage.id, GarageCar.car_id == car_id
-    ).first()
+    link = (
+        db.query(GarageCar)
+        .filter(GarageCar.garage_id == garage.id, GarageCar.car_id == car_id)
+        .first()
+    )
     if not link:
         raise HTTPException(status_code=404, detail="Bilen hittades inte i garaget")
     car = db.query(Car).filter(Car.id == car_id).first()

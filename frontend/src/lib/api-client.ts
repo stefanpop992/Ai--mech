@@ -76,7 +76,26 @@ export interface Car {
   regnr: string;
   make: string | null;
   model: string | null;
+  variant: string | null;
   engine: string | null;
   year: number | null;
+  vin: string | null;
+  color: string | null;
+  status: string | null;
+  transmission: string | null;
+  fuel: string | null;
+  power_hp: number | null;
+  power_kw: number | null;
+  kerb_weight: number | null;
+  length: number | null;
+  width: number | null;
+  meter: number | null;
+  inspection: string | null;
+  inspection_valid_until: string | null;
+  manufactured: string | null;
+  manufactured_country: string | null;
+  registered: string | null;
+  tyre_front: string | null;
+  tyre_rear: string | null;
 }
 
