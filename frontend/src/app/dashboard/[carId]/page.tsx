@@ -38,56 +38,125 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 }
 
 function TeknsikInfo({ car }: { car: Car }) {
+  // Helper to check if inspection is still valid
+  const inspectionStatus = () => {
+    if (!car.inspection_valid_until) return null;
+    const valid = new Date(car.inspection_valid_until);
+    const now = new Date();
+    const daysLeft = Math.ceil((valid.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysLeft < 0) return { text: 'Utgången', color: 'var(--red)' };
+    if (daysLeft < 60) return { text: `${daysLeft} dagar kvar`, color: '#fbbf24' };
+    return { text: 'Godkänd', color: '#34d399' };
+  };
+
+  const inspection = inspectionStatus();
+
+  const sections = [
+    {
+      title: 'Grundinfo',
+      rows: [
+        { label: 'Märke', value: car.make },
+        { label: 'Modell', value: car.model },
+        { label: 'Variant', value: car.variant },
+        { label: 'Årsmodell', value: car.year },
+        { label: 'Registreringsnummer', value: car.regnr },
+        { label: 'VIN', value: car.vin },
+        { label: 'Färg', value: car.color },
+        { label: 'Status', value: car.status === 'Itrafik' ? 'I trafik' : car.status },
+      ],
+    },
+    {
+      title: 'Motor & Drivlina',
+      rows: [
+        { label: 'Bränsle', value: car.fuel },
+        { label: 'Effekt', value: car.power_hp ? `${car.power_hp} hk (${car.power_kw} kW)` : null },
+        { label: 'Växellåda', value: car.transmission },
+      ],
+    },
+    {
+      title: 'Mått & Vikt',
+      rows: [
+        { label: 'Längd', value: car.length ? `${car.length} mm` : null },
+        { label: 'Bredd', value: car.width ? `${car.width} mm` : null },
+        { label: 'Tjänstevikt', value: car.kerb_weight ? `${car.kerb_weight} kg` : null },
+      ],
+    },
+    {
+      title: 'Besiktning & Mätare',
+      rows: [
+        { label: 'Mätarställning', value: car.meter ? `${car.meter.toLocaleString('sv-SE')} km` : null },
+        { label: 'Senaste besiktning', value: car.inspection },
+        { label: 'Giltig till', value: car.inspection_valid_until },
+      ],
+    },
+    {
+      title: 'Däck & Fälgar',
+      rows: [
+        { label: 'Däck fram', value: car.tyre_front },
+        { label: 'Däck bak', value: car.tyre_rear },
+      ],
+    },
+    {
+      title: 'Ursprung',
+      rows: [
+        { label: 'Tillverkad', value: car.manufactured },
+        { label: 'Tillverkningsland', value: car.manufactured_country },
+        { label: 'Registrerad', value: car.registered },
+      ],
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {[
-        {
-          title: 'Grundinfo',
-          rows: [
-            { label: 'Märke', value: car.make },
-            { label: 'Modell', value: car.model },
-            { label: 'Årsmodell', value: car.year },
-            { label: 'Motor', value: car.engine },
-            { label: 'Registreringsnummer', value: car.regnr },
-          ],
-        },
-        {
-          title: 'Fordonsdata',
-          rows: [
-            { label: 'VIN-nummer', value: null },
-            { label: 'Bränsletyp', value: null },
-            { label: 'Växellåda', value: null },
-            { label: 'Färg', value: null },
-            { label: 'Mätarställning (mil)', value: null },
-          ],
-        },
-        {
-          title: 'Diagnostik',
-          rows: [
-            { label: 'OBD-felkoder', value: null },
-            { label: 'Senaste service', value: null },
-            { label: 'Nästa service', value: null },
-          ],
-        },
-      ].map((section) => (
-        <section
-          key={section.title}
-          style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}
-          className="p-5"
+      {/* Inspection banner */}
+      {inspection && (
+        <div
+          className="flex items-center gap-3 p-4"
+          style={{
+            background: 'var(--carbon)',
+            border: `1px solid ${inspection.color}`,
+          }}
         >
-          <h3
-            className="font-dm-mono text-xs uppercase tracking-[4px] mb-3"
-            style={{ color: 'var(--red)' }}
+          <div
+            className="w-3 h-3 rounded-full shrink-0"
+            style={{ background: inspection.color }}
+          />
+          <span className="font-dm-mono text-xs uppercase tracking-widest" style={{ color: inspection.color }}>
+            Besiktning: {inspection.text}
+          </span>
+          {car.inspection_valid_until && (
+            <span className="font-dm-mono text-xs ml-auto" style={{ color: 'var(--dim)' }}>
+              Giltig t.o.m. {car.inspection_valid_until}
+            </span>
+          )}
+        </div>
+      )}
+
+      {sections.map((section) => {
+        // Skip sections where all values are null
+        const hasData = section.rows.some((row) => row.value != null && row.value !== '');
+        if (!hasData) return null;
+
+        return (
+          <section
+            key={section.title}
+            style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}
+            className="p-5"
           >
-            {section.title}
-          </h3>
-          <div>
-            {section.rows.map((row) => (
-              <InfoRow key={row.label} label={row.label} value={row.value} />
-            ))}
-          </div>
-        </section>
-      ))}
+            <h3
+              className="font-dm-mono text-xs uppercase tracking-[4px] mb-3"
+              style={{ color: 'var(--red)' }}
+            >
+              {section.title}
+            </h3>
+            <div>
+              {section.rows.map((row) => (
+                <InfoRow key={row.label} label={row.label} value={row.value} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

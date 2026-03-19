@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "extend_cars_table"
-down_revision = "add_car_documents"
+down_revision = "add_chat_messages"
 branch_labels = None
 depends_on = None
 
