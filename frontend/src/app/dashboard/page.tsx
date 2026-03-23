@@ -189,6 +189,17 @@ export default function DashboardPage() {
 
         <main className="flex-1 p-6 max-w-7xl mx-auto w-full">
 
+          {/* Search any car */}
+          <CarLookup
+            onAddToGarage={async (car) => {
+              try {
+                await createCarByRegnr(car.regnr);
+              } catch {
+                // Already in garage or other error — silent
+              }
+            }}
+          />
+
           {/* Top bar */}
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-bebas text-3xl tracking-widest" style={{ color: 'var(--white)' }}>
@@ -203,16 +214,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Search any car */}
-          <CarLookup
-            onAddToGarage={async (car) => {
-              try {
-                await createCarByRegnr(car.regnr);
-              } catch {
-                // Already in garage or other error — silent
-              }
-            }}
-          />
+
 
           {/* Add car form */}
           {showAddForm && (
