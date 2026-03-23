@@ -1,9 +1,13 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.models.car import Car
+from app.db.models.car_document import CarDocument
+from app.db.models.chat_message import ChatMessage
 from app.db.models.garage_car import GarageCar
 from app.db.models.user import User
 from app.db.session import get_db
@@ -173,7 +177,7 @@ def create_car_manual(
     return car
 
 
-# AUTH: Remove a car from my garage
+# AUTH: Remove a car from my garage (also deletes user's documents + chat history)
 @router.delete("/{car_id}")
 def remove_car_from_my_garage(
     car_id: int,
@@ -188,7 +192,37 @@ def remove_car_from_my_garage(
     )
     if not link:
         raise HTTPException(status_code=404, detail="Bilen hittades inte i garaget")
+
+    # Delete this user's uploaded documents (files on disk + DB rows)
+    docs = (
+        db.query(CarDocument)
+        .filter(CarDocument.car_id == car_id, CarDocument.user_id == current_user.id)
+        .all()
+    )
+    for doc in docs:
+        if os.path.exists(doc.stored_path):
+            os.remove(doc.stored_path)
+        db.delete(doc)
+
+    # Delete this user's chat history for the car
+    db.query(ChatMessage).filter(
+        ChatMessage.car_id == car_id,
+        ChatMessage.user_id == current_user.id,
+    ).delete(synchronize_session=False)
+
     db.delete(link)
+
+    # If no other garage references this car, remove the car record entirely
+    other_links = (
+        db.query(GarageCar)
+        .filter(GarageCar.car_id == car_id, GarageCar.id != link.id)
+        .count()
+    )
+    if other_links == 0:
+        car = db.query(Car).filter(Car.id == car_id).first()
+        if car:
+            db.delete(car)
+
     db.commit()
     return {"message": "Bilen har tagits bort från ditt garage!"}
 

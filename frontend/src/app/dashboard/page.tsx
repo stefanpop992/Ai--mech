@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import DashboardHeader from '@/components/DashboardHeader';
 import CarCard from '@/components/CarCard';
-import { useCars, createCarByRegnr, createCarManual } from '@/hooks/use-cars';
+import { useCars, createCarByRegnr, createCarManual, removeCar } from '@/hooks/use-cars';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CarLookup from '@/components/CarLookup';
 import { type Car } from '@/lib/api-client';
@@ -127,11 +127,13 @@ function Reminders({ cars }: { cars: Car[] }) {
 export default function DashboardPage() {
   const { cars, isLoading, isError } = useCars();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addMode, setAddMode] = useState<AddMode>('regnr');
-  const [regnr, setRegnr] = useState('');
-  const [manual, setManual] = useState(emptyManual);
-  const [addLoading, setAddLoading] = useState(false);
-  const [addError, setAddError] = useState('');
+  const [addMode, setAddMode]         = useState<AddMode>('regnr');
+  const [regnr, setRegnr]             = useState('');
+  const [manual, setManual]           = useState(emptyManual);
+  const [addLoading, setAddLoading]   = useState(false);
+  const [addError, setAddError]       = useState('');
+  const [carToDelete, setCarToDelete] = useState<Car | null>(null);
+  const [deleting, setDeleting]       = useState(false);
 
   const handleClose = () => {
     setShowAddForm(false);
@@ -171,6 +173,19 @@ export default function DashboardPage() {
       setAddError(err?.message ?? 'Kunde inte lägga till bilen.');
     } finally {
       setAddLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!carToDelete) return;
+    setDeleting(true);
+    try {
+      await removeCar(carToDelete.id);
+    } catch {
+      // SWR will revalidate regardless
+    } finally {
+      setDeleting(false);
+      setCarToDelete(null);
     }
   };
 
@@ -361,11 +376,68 @@ export default function DashboardPage() {
           {cars.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {cars.map((car) => (
-                <CarCard key={car.id} car={car} />
+                <CarCard key={car.id} car={car} onDelete={setCarToDelete} />
               ))}
             </div>
           )}
         </main>
+
+        {/* Delete confirmation modal */}
+        {carToDelete && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.75)' }}
+            onClick={() => !deleting && setCarToDelete(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}
+              className="w-full max-w-sm p-6"
+            >
+              <h3
+                className="font-bebas text-xl tracking-widest mb-2"
+                style={{ color: 'var(--white)' }}
+              >
+                Ta bort fordon
+              </h3>
+              <p
+                className="font-dm-mono text-sm leading-relaxed mb-1"
+                style={{ color: 'var(--dim)' }}
+              >
+                Är du säker på att du vill ta bort{' '}
+                <span style={{ color: 'var(--white)' }}>
+                  {carToDelete.make ?? ''} {carToDelete.model ?? ''}{' '}
+                  ({carToDelete.regnr})
+                </span>
+                ?
+              </p>
+              <p
+                className="font-dm-mono text-xs mb-6"
+                style={{ color: 'var(--red)' }}
+              >
+                Detta går inte att ångra.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setCarToDelete(null)}
+                  disabled={deleting}
+                  style={{ border: '1px solid var(--border)', color: 'var(--dim)', background: 'transparent' }}
+                  className="font-dm-mono text-xs uppercase tracking-widest px-5 py-2.5 transition-colors hover:text-[var(--white)] disabled:opacity-50"
+                >
+                  Avbryt
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{ background: 'var(--red)', color: 'var(--white)' }}
+                  className="font-dm-mono text-xs uppercase tracking-widest px-5 py-2.5 transition-opacity disabled:opacity-50"
+                >
+                  {deleting ? 'Tar bort...' : 'Ta bort'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
