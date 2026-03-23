@@ -5,10 +5,124 @@ import CarCard from '@/components/CarCard';
 import { useCars, createCarByRegnr, createCarManual } from '@/hooks/use-cars';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CarLookup from '@/components/CarLookup';
+import { type Car } from '@/lib/api-client';
 
 
 type AddMode = 'regnr' | 'manual';
 const emptyManual = { regnr: '', make: '', model: '', year: '', engine: '' };
+
+function GarageStats({ cars }: { cars: Car[] }) {
+  const now = new Date();
+
+  const inspectionOk = cars.filter((c) => {
+    if (!c.inspection_valid_until) return false;
+    const diff = (new Date(c.inspection_valid_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diff > 60;
+  }).length;
+
+  const inspectionSoon = cars.filter((c) => {
+    if (!c.inspection_valid_until) return false;
+    const diff = (new Date(c.inspection_valid_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+    return diff > 0 && diff <= 60;
+  }).length;
+
+  const inspectionExpired = cars.filter((c) => {
+    if (!c.inspection_valid_until) return false;
+    return new Date(c.inspection_valid_until) < now;
+  }).length;
+
+  const noInspection = cars.filter((c) => !c.inspection_valid_until).length;
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="p-4" style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}>
+        <p className="font-dm-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--dim)' }}>Fordon</p>
+        <p className="font-bebas text-2xl" style={{ color: 'var(--white)' }}>{cars.length}</p>
+      </div>
+      <div className="p-4" style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}>
+        <p className="font-dm-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--dim)' }}>Besiktning ok</p>
+        <p className="font-bebas text-2xl" style={{ color: '#34d399' }}>{inspectionOk}</p>
+      </div>
+      <div className="p-4" style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}>
+        <p className="font-dm-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--dim)' }}>Snart besiktning</p>
+        <p className="font-bebas text-2xl" style={{ color: '#fbbf24' }}>{inspectionSoon}</p>
+      </div>
+      <div className="p-4" style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}>
+        <p className="font-dm-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: 'var(--dim)' }}>Utgången</p>
+        <p className="font-bebas text-2xl" style={{ color: 'var(--red)' }}>{inspectionExpired}</p>
+      </div>
+    </div>
+  );
+}
+
+function Reminders({ cars }: { cars: Car[] }) {
+  const now = new Date();
+
+  const reminders: { car: Car; type: string; label: string; color: string }[] = [];
+
+  cars.forEach((car) => {
+    if (!car.inspection_valid_until) return;
+    const valid = new Date(car.inspection_valid_until);
+    const daysLeft = Math.ceil((valid.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft < 0) {
+      reminders.push({
+        car,
+        type: 'Besiktning utgången',
+        label: `Utgick ${car.inspection_valid_until}`,
+        color: 'var(--red)',
+      });
+    } else if (daysLeft <= 60) {
+      reminders.push({
+        car,
+        type: 'Besiktning snart',
+        label: `Om ${daysLeft} dagar`,
+        color: '#fbbf24',
+      });
+    }
+  });
+
+  if (reminders.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <p
+        className="font-dm-mono text-xs uppercase tracking-[4px] mb-3"
+        style={{ color: 'var(--red)' }}
+      >
+        Påminnelser
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {reminders.map((r, i) => (
+          <div
+            key={i}
+            className="p-4 flex items-center gap-4"
+            style={{ background: 'var(--carbon)', border: '1px solid var(--border)' }}
+          >
+            <div
+              className="w-3 h-3 rounded-full shrink-0"
+              style={{ background: r.color }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="font-dm-sans text-sm font-medium" style={{ color: 'var(--white)' }}>
+                {r.car.make} {r.car.model}
+              </p>
+              <p className="font-dm-mono text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--dim)' }}>
+                {r.type} · {r.label}
+              </p>
+            </div>
+            <span
+              className="font-dm-mono text-[10px] font-bold px-2 py-0.5 shrink-0 uppercase tracking-wider"
+              style={{ background: 'rgba(224,48,48,0.1)', border: `1px solid ${r.color}`, color: r.color }}
+            >
+              {r.car.regnr}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { cars, isLoading, isError } = useCars();
