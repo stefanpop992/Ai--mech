@@ -55,8 +55,6 @@ export default function CarBrandLogo({ make, size = 48, className = '' }: CarBra
                 style={{
                     width: size,
                     height: size,
-                    background: 'var(--steel)',
-                    border: '1px solid var(--border)',
                     color: 'var(--red)',
                     fontSize: size * 0.5,
                 }}
@@ -67,26 +65,16 @@ export default function CarBrandLogo({ make, size = 48, className = '' }: CarBra
     }
 
     return (
-        <div
-            className={`flex items-center justify-center ${className}`}
+        <img
+            src={`/logos/${file}`}
+            alt={make ?? 'Bilmärke'}
+            className={className}
             style={{
                 width: size,
                 height: size,
-                background: 'var(--steel)',
-                border: '1px solid var(--border)',
-                padding: size * 0.15,
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
             }}
-        >
-            <img
-                src={`/logos/${file}`}
-                alt={make ?? 'Bilmärke'}
-                style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    filter: 'brightness(0) invert(1)',
-                }}
-            />
-        </div>
+        />
     );
 }
