@@ -40,22 +40,13 @@ export default function LookupCarPage() {
     useEffect(() => {
         const fetchCar = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/cars/lookup?regnr=&car_id=${carId}`, {
+                const res = await fetch(`${API_BASE_URL}/cars/detail/${carId}`, {
                     credentials: 'include',
                 });
                 if (!res.ok) throw new Error();
                 setCar(await res.json());
             } catch {
-                // Fallback: try getting from cars table directly
-                try {
-                    const res = await fetch(`${API_BASE_URL}/cars/${carId}`, {
-                        credentials: 'include',
-                    });
-                    if (!res.ok) throw new Error();
-                    setCar(await res.json());
-                } catch {
-                    setError('Kunde inte hämta fordonet');
-                }
+                setError('Kunde inte hämta fordonet');
             } finally {
                 setLoading(false);
             }

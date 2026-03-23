@@ -55,6 +55,15 @@ def lookup_car(regnr: str, db: Session = Depends(get_db)):
     return car
 
 
+# PUBLIC: Get car by ID for lookup (no auth)
+@router.get("/detail/{car_id}", response_model=CarRead)
+def get_car_detail(car_id: int, db: Session = Depends(get_db)):
+    car = db.query(Car).filter(Car.id == car_id).first()
+    if not car:
+        raise HTTPException(status_code=404, detail="Bilen hittades inte")
+    return car
+
+
 # AUTH: List cars in my garage
 @router.get("", response_model=list[CarRead])
 def list_my_cars(

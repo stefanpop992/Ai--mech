@@ -197,7 +197,7 @@ export default function CarLookup({ onAddToGarage }: CarLookupProps) {
                         style={{ borderTop: '1px solid var(--border)', background: 'var(--steel)' }}
                     >
                         <button
-                            onClick={() => router.push(`/dashboard/${result.id}`)}
+                            onClick={() => router.push(`/lookup/${result.id}`)}
                             className="font-dm-mono text-xs uppercase tracking-widest px-4 py-2 transition-colors"
                             style={{ background: 'var(--red)', color: 'var(--white)' }}
                         >
