@@ -7,6 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useCars } from '@/hooks/use-cars';
 import { type Car } from '@/lib/api-client';
 import Documents from '@/components/Documents';
+import CarBrandLogo from '@/components/CarBrandLogo';
 
 type Tab = 'info' | 'documents' | 'parts' | 'chat';
 
@@ -279,7 +280,7 @@ export default function CarDetailPage() {
               style={{ background: 'var(--steel)' }}
               className="h-28 w-44 flex items-center justify-center shrink-0"
             >
-              <span className="text-6xl select-none">🚗</span>
+              <CarBrandLogo make={car.make} size={80} />
             </div>
 
             {/* Car info */}

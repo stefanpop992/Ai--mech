@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { type Car } from '@/lib/api-client';
+import CarBrandLogo from '@/components/CarBrandLogo';
 
 interface CarCardProps {
   car: Car;
@@ -20,7 +21,7 @@ export default function CarCard({ car }: CarCardProps) {
         style={{ background: 'var(--steel)' }}
         className="h-36 flex items-center justify-center group-hover:brightness-110 transition-all"
       >
-        <span className="text-6xl select-none">🚗</span>
+        <CarBrandLogo make={car.make} size={72} />
       </div>
 
       {/* Info */}
