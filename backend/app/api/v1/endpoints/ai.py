@@ -123,21 +123,37 @@ def ask_mechanic(
         question=payload.question,
         history=history,
         max_output_tokens=max_tokens,
+        car_variant=car.variant,
+        car_color=car.color,
+        car_fuel=car.fuel,
+        car_transmission=car.transmission,
+        car_power_hp=car.power_hp,
+        car_kerb_weight=car.kerb_weight,
+        car_meter=car.meter,
+        car_inspection=car.inspection,
+        car_inspection_valid_until=car.inspection_valid_until,
+        car_tyre_front=car.tyre_front,
+        car_tyre_rear=car.tyre_rear,
+        car_manufactured_country=car.manufactured_country,
     )
 
     # Save messages to DB (all users — free for counting, premium for history)
-    db.add(ChatMessage(
-        user_id=current_user.id,
-        car_id=car.id,
-        role="user",
-        content=payload.question,
-    ))
-    db.add(ChatMessage(
-        user_id=current_user.id,
-        car_id=car.id,
-        role="assistant",
-        content=answer,
-    ))
+    db.add(
+        ChatMessage(
+            user_id=current_user.id,
+            car_id=car.id,
+            role="user",
+            content=payload.question,
+        )
+    )
+    db.add(
+        ChatMessage(
+            user_id=current_user.id,
+            car_id=car.id,
+            role="assistant",
+            content=answer,
+        )
+    )
     db.commit()
 
     # Return remaining count for free users
