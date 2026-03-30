@@ -8,12 +8,14 @@ import { useCars } from '@/hooks/use-cars';
 import { type Car } from '@/lib/api-client';
 import Documents from '@/components/Documents';
 import CarBrandLogo from '@/components/CarBrandLogo';
+import ServiceLogs from '@/components/ServiceLogs';
 
-type Tab = 'info' | 'documents' | 'parts' | 'chat';
+type Tab = 'info' | 'documents' | 'service' | 'parts' | 'chat';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'info', label: 'Teknisk info' },
   { id: 'documents', label: 'Dokument / Manualer' },
+  { id: 'service', label: 'Service' },
   { id: 'parts', label: 'Delar' },
   { id: 'chat', label: 'AI-Chat' },
 ];
@@ -337,6 +339,7 @@ export default function CarDetailPage() {
           {/* Content */}
           {activeTab === 'info' && <TeknsikInfo car={car} />}
           {activeTab === 'documents' && <Documents car={car} />}
+          {activeTab === 'service' && <ServiceLogs car={car} />}
           {activeTab === 'parts' && <Parts />}
           {activeTab === 'chat' && <ChatWindow car={car} />}
         </main>
