@@ -230,9 +230,7 @@ function CreateServiceForm({ carId, onCreated, onCancel }: CreateFormProps) {
     const [workshop, setWorkshop] = useState('');
     const [cost, setCost] = useState('');
     const [notes, setNotes] = useState('');
-    const [checkedItems, setCheckedItems] = useState
-    Map < string, Set < string >>
-    > (new Map());
+    const [checkedItems, setCheckedItems] = useState<Map<string, Set<string>>>(new Map());
     const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');

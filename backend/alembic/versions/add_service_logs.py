@@ -9,7 +9,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = "add_service_logs"
-down_revision = "cab150a1594d"  # ← ändra om du har nyare migrations
+down_revision = "extend_cars_table"
 branch_labels = None
 depends_on = None
 
