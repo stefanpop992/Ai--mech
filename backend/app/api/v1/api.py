@@ -4,6 +4,7 @@ from app.api.v1.endpoints.ai import router as ai_router
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.cars import router as cars_router
 from app.api.v1.endpoints.documents import router as documents_router
+from app.api.v1.endpoints.parts import router as parts_router
 from app.api.v1.endpoints.password import router as password_router
 from app.api.v1.endpoints.services import router as services_router
 from app.api.v1.endpoints.users import router as users_router
@@ -17,3 +18,4 @@ api_router.include_router(password_router)
 api_router.include_router(documents_router)
 api_router.include_router(users_router)
 api_router.include_router(services_router)
+api_router.include_router(parts_router)
