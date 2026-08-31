@@ -7,8 +7,6 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import get_current_user
-from app.db.models.car import Car
-from app.db.models.garage_car import GarageCar
 from app.db.models.service_log import ServiceLog, ServiceLogImage, ServiceLogItem
 from app.db.models.user import User
 from app.db.session import get_db
@@ -19,7 +17,7 @@ from app.schemas.service_log import (
     ServiceLogSummary,
     ServiceLogUpdate,
 )
-from app.services.garage_service import get_or_create_garage
+from app.services.garage_service import verify_car_in_garage
 
 router = APIRouter(prefix="/cars/{car_id}/services", tags=["services"])
 
@@ -46,21 +44,6 @@ VALID_CATEGORIES = {
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-
-
-def _verify_car_in_garage(db: Session, user: User, car_id: int) -> Car:
-    garage = get_or_create_garage(db, user.id)
-    link = (
-        db.query(GarageCar)
-        .filter(GarageCar.garage_id == garage.id, GarageCar.car_id == car_id)
-        .first()
-    )
-    if not link:
-        raise HTTPException(status_code=404, detail="Bilen hittades inte i ditt garage")
-    car = db.query(Car).filter(Car.id == car_id).first()
-    if not car:
-        raise HTTPException(status_code=404, detail="Bilen finns inte")
-    return car
 
 
 def _get_service_or_404(
@@ -106,7 +89,7 @@ def list_services(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
 
     services = (
         db.query(ServiceLog)
@@ -133,7 +116,7 @@ def create_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
 
     # Validate categories
     for item in payload.items:
@@ -176,7 +159,7 @@ def get_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
     return _get_service_or_404(db, current_user, car_id, service_id)
 
 
@@ -188,7 +171,7 @@ def update_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
     service = _get_service_or_404(db, current_user, car_id, service_id)
 
     if payload.service_date is not None:
@@ -237,7 +220,7 @@ def delete_service(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
     service = _get_service_or_404(db, current_user, car_id, service_id)
 
     # Remove image files from disk
@@ -265,7 +248,7 @@ async def upload_service_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
     service = _get_service_or_404(db, current_user, car_id, service_id)
 
     if file.content_type not in ALLOWED_IMAGE_TYPES:
@@ -309,7 +292,7 @@ def preview_service_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
 
     image = (
         db.query(ServiceLogImage)
@@ -342,7 +325,7 @@ def delete_service_image(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    _verify_car_in_garage(db, current_user, car_id)
+    verify_car_in_garage(db, current_user, car_id)
 
     image = (
         db.query(ServiceLogImage)

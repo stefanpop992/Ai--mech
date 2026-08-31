@@ -18,9 +18,13 @@ from app.services.garage_service import get_or_create_garage
 router = APIRouter(prefix="/cars", tags=["cars"])
 
 
-# PUBLIC: Look up a car by regnr without auth
+# AUTH: Look up a car by regnr (hits the paid Biluppgifter API on a cache miss)
 @router.get("/lookup", response_model=CarRead)
-def lookup_car(regnr: str, db: Session = Depends(get_db)):
+def lookup_car(
+    regnr: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     regnr_n = normalize_regnr(regnr)
     existing = db.query(Car).filter(Car.regnr == regnr_n).first()
     if existing:
@@ -59,9 +63,13 @@ def lookup_car(regnr: str, db: Session = Depends(get_db)):
     return car
 
 
-# PUBLIC: Get car by ID for lookup (no auth)
+# AUTH: Get car by ID for lookup
 @router.get("/detail/{car_id}", response_model=CarRead)
-def get_car_detail(car_id: int, db: Session = Depends(get_db)):
+def get_car_detail(
+    car_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     car = db.query(Car).filter(Car.id == car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Bilen hittades inte")
