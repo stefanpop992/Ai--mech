@@ -1,4 +1,5 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,7 @@ export default function SettingsPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.detail || 'Något gick fel.');
+        setError(apiErrorMessage(data, 'Något gick fel.'));
         return;
       }
 

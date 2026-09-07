@@ -119,17 +119,25 @@ def me(user: User = Depends(get_current_user)):
     return user
 
 
+@router.post("/change-password", include_in_schema=False)
 @router.put("/change-password")
 def change_password(
     payload: ChangePasswordRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    current_user = db.query(User).filter(User.id == current_user.id).with_for_update().populate_existing().one()
     if not verify_password(payload.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Nuvarande lösenord är felaktigt")
-    if len(payload.new_password) < 6:
-        raise HTTPException(status_code=400, detail="Lösenordet måste vara minst 6 tecken")
     current_user.hashed_password = hash_password(payload.new_password)
+    current_user.reset_token = None
+    current_user.reset_token_expires = None
+    # Keep this browser signed in; invalidate sessions on other devices.
+    db.query(DBSession).filter(
+        DBSession.user_id == current_user.id,
+        DBSession.token != request.cookies.get(COOKIE_NAME),
+    ).delete(synchronize_session=False)
     db.commit()
     return {"message": "Lösenordet har uppdaterats"}
 
