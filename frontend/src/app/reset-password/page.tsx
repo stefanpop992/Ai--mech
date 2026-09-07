@@ -1,4 +1,5 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -44,7 +45,7 @@ function ResetPasswordForm() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.detail || 'Något gick fel.');
+        setError(apiErrorMessage(data, 'Något gick fel.'));
         return;
       }
 

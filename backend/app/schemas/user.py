@@ -2,10 +2,12 @@ from typing import Optional
 
 from pydantic import BaseModel, EmailStr
 
+from app.schemas.auth import NewPassword
+
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: NewPassword
 
 
 class UserRead(BaseModel):

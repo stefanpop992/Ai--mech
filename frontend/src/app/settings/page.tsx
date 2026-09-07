@@ -1,4 +1,5 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -126,7 +127,7 @@ function ChangePassword() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAlert({ type: 'error', msg: data.detail ?? 'Något gick fel' });
+        setAlert({ type: 'error', msg: apiErrorMessage(data, 'Något gick fel') });
         return;
       }
       setAlert({ type: 'success', msg: 'Lösenordet har uppdaterats' });
@@ -172,7 +173,7 @@ function ChangeEmail() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAlert({ type: 'error', msg: data.detail ?? 'Något gick fel' });
+        setAlert({ type: 'error', msg: apiErrorMessage(data, 'Något gick fel') });
         return;
       }
       setAlert({ type: 'success', msg: 'E-postadressen har uppdaterats' });
@@ -303,7 +304,7 @@ function DeleteAccount() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.detail ?? 'Något gick fel');
+        setError(apiErrorMessage(data, 'Något gick fel'));
         return;
       }
       router.push('/login');

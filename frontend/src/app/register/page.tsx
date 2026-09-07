@@ -1,4 +1,5 @@
 'use client';
+import { apiErrorMessage } from '@/lib/api-error';
 import { useState } from 'react';
 import Link from 'next/link';
 
@@ -34,7 +35,7 @@ export default function RegisterPage() {
         setSuccess(true);
       } else {
         const data = await res.json();
-        setError(data.detail || 'Registreringen misslyckades');
+        setError(apiErrorMessage(data, 'Registreringen misslyckades'));
       }
     } catch {
       setError('Kunde inte nå servern. Är backend igång?');
