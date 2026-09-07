@@ -13,14 +13,18 @@ from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.car import CarCreateManual, CarRead, CarRegisterRequest, CarUpdate
 from app.services.car_info import lookup_car_by_regnr, normalize_regnr
-from app.services.garage_service import get_or_create_garage
+from app.services.garage_service import get_or_create_garage, personal_car
 
 router = APIRouter(prefix="/cars", tags=["cars"])
 
 
-# PUBLIC: Look up a car by regnr without auth
+# AUTH: Look up a car by regnr (hits the paid Biluppgifter API on a cache miss)
 @router.get("/lookup", response_model=CarRead)
-def lookup_car(regnr: str, db: Session = Depends(get_db)):
+def lookup_car(
+    regnr: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     regnr_n = normalize_regnr(regnr)
     existing = db.query(Car).filter(Car.regnr == regnr_n).first()
     if existing:
@@ -59,13 +63,20 @@ def lookup_car(regnr: str, db: Session = Depends(get_db)):
     return car
 
 
-# PUBLIC: Get car by ID for lookup (no auth)
+# AUTH: Get car by ID for lookup
 @router.get("/detail/{car_id}", response_model=CarRead)
-def get_car_detail(car_id: int, db: Session = Depends(get_db)):
+def get_car_detail(
+    car_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     car = db.query(Car).filter(Car.id == car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Bilen hittades inte")
-    return car
+    link = db.query(GarageCar).filter(
+        GarageCar.car_id == car_id, GarageCar.garage.has(user_id=current_user.id)
+    ).first()
+    return personal_car(car, link)
 
 
 # AUTH: List cars in my garage
@@ -75,16 +86,13 @@ def list_my_cars(
     current_user: User = Depends(get_current_user),
 ):
     garage = get_or_create_garage(db, current_user.id)
-    return (
-        db.execute(
-            select(Car)
-            .join(GarageCar, GarageCar.car_id == Car.id)
-            .where(GarageCar.garage_id == garage.id)
-            .order_by(Car.id.desc())
-        )
-        .scalars()
-        .all()
-    )
+    rows = db.execute(
+        select(Car, GarageCar)
+        .join(GarageCar, GarageCar.car_id == Car.id)
+        .where(GarageCar.garage_id == garage.id)
+        .order_by(Car.id.desc())
+    ).all()
+    return [personal_car(car, link) for car, link in rows]
 
 
 # AUTH: Add a car to my garage by regnr (auto-lookup)
@@ -140,7 +148,7 @@ def register_car(
         db.add(GarageCar(garage_id=garage.id, car_id=car.id))
         db.commit()
 
-    return car
+    return personal_car(car, link)
 
 
 # AUTH: Add a car to my garage manually
@@ -174,7 +182,7 @@ def create_car_manual(
         raise HTTPException(status_code=409, detail="Bilen finns redan i ditt garage")
     db.add(GarageCar(garage_id=garage.id, car_id=car.id))
     db.commit()
-    return car
+    return personal_car(car, link)
 
 
 # AUTH: Remove a car from my garage (also deletes user's documents + chat history)
@@ -246,9 +254,8 @@ def update_car(
     car = db.query(Car).filter(Car.id == car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Bilen finns inte")
-    for key, value in payload.model_dump(exclude_unset=True).items():
-        setattr(car, key, value)
-    db.add(car)
+    link.overrides = {**(link.overrides or {}), **payload.model_dump(exclude_unset=True)}
+    db.add(link)
     db.commit()
     db.refresh(car)
-    return car
+    return personal_car(car, link)

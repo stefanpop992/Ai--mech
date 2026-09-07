@@ -9,6 +9,7 @@ import { type Car } from '@/lib/api-client';
 import Documents from '@/components/Documents';
 import CarBrandLogo from '@/components/CarBrandLogo';
 import ServiceLogs from '@/components/ServiceLogs';
+import Parts from '@/components/Parts';
 
 type Tab = 'info' | 'documents' | 'service' | 'parts' | 'chat';
 
@@ -165,49 +166,6 @@ function TeknsikInfo({ car }: { car: Car }) {
 }
 
 
-// ── Delar ─────────────────────────────────────────────────────────────────────
-
-const PART_CATEGORIES = [
-  { icon: '🔩', label: 'Filter', sub: 'Olje-, luft-, bränslefilter' },
-  { icon: '🛞', label: 'Bromsar', sub: 'Skivor, belägg, bromsvätska' },
-  { icon: '🏎️', label: 'Däck & Fälgar', sub: 'Sommar-, vinterdäck' },
-  { icon: '⚙️', label: 'Kamrem / Kedja', sub: 'Byte & intervall' },
-  { icon: '🔋', label: 'Batteri', sub: 'Kapacitet, ålder' },
-  { icon: '💧', label: 'Torkare', sub: 'Fram & bak' },
-  { icon: '💡', label: 'Belysning', sub: 'Glödlampor, LED' },
-  { icon: '🛢️', label: 'Olja & Vätskor', sub: 'Motorolja, kylvätska' },
-];
-
-function Parts() {
-  return (
-    <div>
-      <p className="font-dm-mono text-xs uppercase tracking-widest mb-5" style={{ color: 'var(--dim)' }}>
-        Håll koll på dina bildelar och byten.
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px"
-        style={{ background: 'var(--border)' }}>
-        {PART_CATEGORIES.map((part) => (
-          <button
-            key={part.label}
-            style={{ background: 'var(--carbon)' }}
-            className="p-5 flex items-center gap-4 text-left group transition-all hover:brightness-125"
-          >
-            <span className="text-2xl">{part.icon}</span>
-            <div>
-              <p className="font-dm-sans text-sm font-medium" style={{ color: 'var(--white)' }}>
-                {part.label}
-              </p>
-              <p className="font-dm-mono text-xs uppercase tracking-wider mt-0.5"
-                style={{ color: 'var(--dim)' }}>
-                {part.sub}
-              </p>
-            </div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -340,7 +298,7 @@ export default function CarDetailPage() {
           {activeTab === 'info' && <TeknsikInfo car={car} />}
           {activeTab === 'documents' && <Documents car={car} />}
           {activeTab === 'service' && <ServiceLogs car={car} />}
-          {activeTab === 'parts' && <Parts />}
+          {activeTab === 'parts' && <Parts car={car} />}
           {activeTab === 'chat' && <ChatWindow car={car} />}
         </main>
       </div>

@@ -1,3 +1,4 @@
+import logging
 from app.api.deps import get_current_user
 import secrets
 import resend
@@ -10,6 +11,8 @@ from app.core.config import settings
 from app.db.session import get_db
 from app.db.models.user import User
 from app.core.security import hash_password as get_password_hash, verify_password
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -46,13 +49,11 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
 
     # Send email
     reset_url = f"{settings.FRONTEND_URL}/reset-password?token={token}"
-    print(f"[forgot-password] Sending reset email to {user.email}")
-    print(f"[forgot-password] Reset URL: {reset_url}")
-    print(f"[forgot-password] RESEND_API_KEY set: {bool(settings.RESEND_API_KEY)}")
-    print(f"[forgot-password] MAIL_FROM: {settings.MAIL_FROM}")
+
+    logger.info("Sending password reset email (user_id=%s)", user.id)
 
     try:
-        result = resend.Emails.send({
+        resend.Emails.send({
             "from": settings.MAIL_FROM,
             "to": user.email,
             "subject": "Återställ ditt lösenord — AI Mechanic",
@@ -63,10 +64,9 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
                 <p>Om du inte begärt detta kan du ignorera detta mail.</p>
             """,
         })
-        print(f"[forgot-password] Resend response: {result}")
-    except Exception as e:
-        print(f"[forgot-password] ERROR sending email: {e}")
-        raise HTTPException(status_code=500, detail=f"Kunde inte skicka mail: {e}")
+    except Exception:
+        logger.exception("Password reset email failed to send (user_id=%s)", user.id)
+        raise HTTPException(status_code=500, detail="Kunde inte skicka mail.")
 
     return {"message": "Om e-posten finns skickar vi en återställningslänk."}
 

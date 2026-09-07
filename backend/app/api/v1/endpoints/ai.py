@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
-from app.db.models.car import Car
 from app.db.models.chat_message import ChatMessage
 from app.db.models.user import User
 from app.db.session import get_db
+from app.services.garage_service import verify_car_in_garage
 from app.schemas.ai_chat import AIQuestion, AIResponse, ChatMessageRead
 from app.services.ai_service import get_ai_response
 
@@ -101,10 +101,8 @@ def ask_mechanic(
                 ),
             )
 
-    # Fetch car
-    car = db.query(Car).filter(Car.id == payload.car_id).first()
-    if not car:
-        raise HTTPException(status_code=404, detail="Bilen hittades inte")
+    # Fetch car (must be in the user's garage)
+    car = verify_car_in_garage(db, current_user, payload.car_id)
 
     # Build history for AI call
     history = (

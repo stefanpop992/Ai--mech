@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Integer, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, UniqueConstraint, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -20,6 +20,8 @@ class GarageCar(Base):
         nullable=False,
         index=True,
     )
+
+    overrides: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     garage = relationship("Garage", back_populates="cars")
     car = relationship("Car", back_populates="garages")

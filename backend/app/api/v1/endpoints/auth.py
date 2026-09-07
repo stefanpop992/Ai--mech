@@ -1,3 +1,4 @@
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -13,6 +14,8 @@ from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.auth import ChangeEmailRequest, ChangePasswordRequest, LoginRequest
 from app.schemas.user import UserCreate, UserRead
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -42,7 +45,6 @@ def _set_cookie(response: Response, token: str) -> None:
 
 @router.post("/register")
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    print("=== REGISTER HIT ===")
     if db.query(User).filter(User.email == payload.email).first():
         raise HTTPException(status_code=409, detail="Email already registered")
 
@@ -57,8 +59,6 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     db.refresh(user)
 
     verify_url = f"{settings.FRONTEND_ORIGIN}/verify-email?token={user.verification_token}"
-    print(f"=== SENDING EMAIL TO: {user.email} ===")
-    print(f"=== RESEND API KEY EXISTS: {bool(settings.RESEND_API_KEY)} ===")
     try:
         resend.Emails.send({
             "from": settings.MAIL_FROM,
@@ -71,10 +71,9 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
                 <p>Om du inte skapat något konto kan du ignorera detta mail.</p>
             """,
         })
-        print("=== EMAIL SENT OK ===")
-    except Exception as e:
-        print(f"=== EMAIL FAILED: {e} ===")
-        raise HTTPException(status_code=500, detail=f"Email fel: {str(e)}")
+    except Exception:
+        logger.exception("Verification email failed to send")
+        raise HTTPException(status_code=500, detail="Kunde inte skicka aktiveringsmail.")
 
     return {"message": "Kolla din mail för att aktivera ditt konto"}
 
