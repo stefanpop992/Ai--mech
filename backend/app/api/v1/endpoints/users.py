@@ -8,9 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import COOKIE_NAME, get_current_user
 from app.db.models.car import Car
-from app.db.models.car_document import CarDocument
 from app.db.models.garage_car import GarageCar
-from app.db.models.session import Session as DBSession
 from app.db.models.user import User
 from app.db.session import get_db
 
@@ -83,31 +81,28 @@ def delete_account(
 ):
     user_id = current_user.id
 
-    # Delete all uploaded files from disk for this user
+    # Bulk deletion lets database ON DELETE CASCADE remove only this user's
+    # records, without ORM backrefs trying to null non-nullable foreign keys.
+    garage = current_user.garage
+    car_ids = []
+    if garage:
+        car_ids = [row.car_id for row in db.query(GarageCar).filter(
+            GarageCar.garage_id == garage.id
+        ).all()]
+    db.query(User).filter(User.id == user_id).delete(synchronize_session=False)
+    if car_ids:
+        db.query(Car).filter(
+            Car.id.in_(car_ids),
+            ~Car.garages.any(),
+        ).delete(synchronize_session=False)
+    db.commit()
+
+    # Files are removed only after the database transaction succeeds.
     user_upload_dir = UPLOAD_DIR / str(user_id)
     if user_upload_dir.exists():
         shutil.rmtree(user_upload_dir, ignore_errors=True)
-
-    # Delete profile picture
     for ext in (".jpg", ".png"):
-        profile_path = PROFILES_DIR / f"{user_id}{ext}"
-        if profile_path.exists():
-            profile_path.unlink(missing_ok=True)
-
-    # Delete cars owned by this user (via garage)
-    garage = current_user.garage
-    if garage:
-        car_links = db.query(GarageCar).filter(GarageCar.garage_id == garage.id).all()
-        car_ids = [link.car_id for link in car_links]
-        for car_id in car_ids:
-            db.query(Car).filter(Car.id == car_id).delete()
-
-    # Delete all sessions
-    db.query(DBSession).filter(DBSession.user_id == user_id).delete()
-
-    # Delete user (cascades to garage, garage_cars, car_documents)
-    db.delete(current_user)
-    db.commit()
+        (PROFILES_DIR / f"{user_id}{ext}").unlink(missing_ok=True)
 
     # Clear session cookie
     response.delete_cookie(key=COOKIE_NAME, path="/")

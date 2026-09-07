@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -20,7 +22,7 @@ def get_or_create_garage(db: Session, user_id: int) -> Garage:
     return garage
 
 
-def verify_car_in_garage(db: Session, user: User, car_id: int) -> Car:
+def verify_car_in_garage(db: Session, user: User, car_id: int) -> SimpleNamespace:
     """Ensure the car exists and sits in the user's garage, else 404."""
     garage = get_or_create_garage(db, user.id)
     link = (
@@ -33,4 +35,12 @@ def verify_car_in_garage(db: Session, user: User, car_id: int) -> Car:
     car = db.query(Car).filter(Car.id == car_id).first()
     if not car:
         raise HTTPException(status_code=404, detail="Bilen finns inte")
-    return car
+    return personal_car(car, link)
+
+
+def personal_car(car: Car, link: GarageCar | None) -> SimpleNamespace:
+    """Return a detached view; personal edits must never dirty the shared row."""
+    values = {column.name: getattr(car, column.name) for column in Car.__table__.columns}
+    if link and link.overrides:
+        values.update(link.overrides)
+    return SimpleNamespace(**values)
