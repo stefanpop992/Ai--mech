@@ -6,6 +6,10 @@ The interface is branded **MyGarage**.
 
 **Stack:** Python · FastAPI · PostgreSQL · Next.js · TypeScript · Gemini API · Docker Compose
 
+<p align="center">
+  <img src="docs/images/start_page.png" alt="MyGarage landing page" width="900">
+</p>
+
 ## What the application includes
 
 - Personal garages with vehicle information retrieved by registration number.
@@ -14,11 +18,21 @@ The interface is branded **MyGarage**.
 - Account registration, email verification, session-based login and password recovery.
 - Per-user garage data, with tests for isolation and account deletion behavior.
 
+## Screenshots
+
+### Context-aware AI chat
+
+![AI assistant for a selected vehicle](docs/images/AI_chat.png)
+
+### Account registration
+
+<img src="docs/images/log_in.png" alt="MyGarage account registration" width="420">
+
 ## AI assistant
 
-The AI component integrates a hosted Gemini model. It does not train a custom
-model or retrieve repair manuals through a RAG pipeline. Uploaded documents are
-managed by the application; they are not automatically used as AI evidence.
+The assistant uses a hosted Gemini model together with the selected vehicle's
+specifications and conversation history. Uploaded documents are managed by the
+application but are not automatically used as AI evidence.
 
 Vehicle context, questions and chat history are sent to Gemini. Responses are
 generated guidance, not verified diagnoses.
